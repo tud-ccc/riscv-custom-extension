@@ -4,34 +4,23 @@ import clang.cindex
 import sys
 
 
-# List of AST node objects that are function calls
-function_calls = []
-# List of AST node objects that are fucntion declarations
-function_declarations = []
-
-
-# Traverse the AST tree
-def traverse(node):
-
-    # Recurse for children of this node
+def method_definitions(node):
     for child in node.get_children():
-        traverse(child)
+        method_definitions(child)
 
-    # Add the node to function_calls
-    if node.type == clang.cindex.CursorKind.CALL_EXPR:
-        function_calls.append(node)
+    if node.kind == clang.cindex.CursorKind.COMPOUND_STMT:
+        extract_definition(node)
 
-    # Add the node to function_declarations
-    if node.type == clang.cindex.CursorKind.FUNCTION_DECL:
-        function_declarations.append(node)
 
-    # Print out information about the node
-    print('Found %s [line=%s, col=%s]' %
-          (node.displayname, node.location.line, node.location.column))
+def extract_definition(node):
+    filename = node.location.file.name
+    with open(filename, 'r') as fh:
+        contents = fh.read()
+    print(contents[node.extent.start.offset: node.extent.end.offset])
 
 
 index = clang.cindex.Index.create()
 tu = index.parse(
-    sys.argv[1], ['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__'])
+    sys.argv[1], ['-x', 'c++', '-std=c++11'])
 
-traverse(tu.cursor)
+method_definitions(tu.cursor)
