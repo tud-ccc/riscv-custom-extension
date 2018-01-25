@@ -7,6 +7,7 @@ import sys
 class Model:
 
     def __init__(self):
+        clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
         index = clang.cindex.Index.create()
         tu = index.parse(
             sys.argv[1], ['-x', 'c++', '-std=c++11'])
