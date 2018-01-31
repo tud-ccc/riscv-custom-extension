@@ -15,7 +15,6 @@ class Model:
     '''
 
     def __init__(self, impl):
-        print(impl)
 
         # clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
         index = clang.cindex.Index.create()
@@ -100,9 +99,11 @@ class Instructions:
         self._matches = [
             entry for entry in lines if entry.startswith('#define MATCH')]
         self._mask_names = [
-            entry for entry in self._masks for entry in entry.split()]
-
-        print(self._mask_names)
+            entry for entry in self._masks for entry in entry.split()
+            if entry.startswith('MASK')]
+        self._match_names = [
+            entry for entry in self._matches for entry in entry.split()
+            if entry.startswith('MATCH')]
 
         assert len(self._masks) == len(
             self._matches), 'Length of mask and match arrays differ'
@@ -112,16 +113,24 @@ class Instructions:
         return self._models
 
     @property
-    def names(self):
+    def funcnames(self):
         return self._names
+
+    @property
+    def matches(self):
+        return self._matches
 
     @property
     def masks(self):
         return self._masks
 
     @property
-    def matches(self):
-        return self._matches
+    def matchnames(self):
+        return self._match_names
+
+    @property
+    def masknames(self):
+        return self._mask_names
 
 
 def parse_model(args):
@@ -170,6 +179,13 @@ def extend_assembler(models):
 
     # in the c file the asm instruction is defined
     # build string that has to be inserted
+
+    inst_def_templ = Template(filename='inst-definition.mako')
+    inst_def = 'inst_def'
+
+    with open(inst_def, 'w') as fh:
+            fh.write(inst_def_templ.render(instructions=instructions,
+                                           opcc=opcc))
 
 
 def main():
