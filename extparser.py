@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import clang.cindex
+from mako.template import Template
 import sys
 
 
 class Model:
 
     def __init__(self):
-        clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
+        # clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
         index = clang.cindex.Index.create()
         tu = index.parse(
             sys.argv[1], ['-x', 'c++', '-std=c++11'])
@@ -58,6 +59,21 @@ def parse_model():
     dfn = model.definition
     print(dfn)
 
+    return model
+
+
+def create_file(model):
+
+    opcodes_cust = Template(filename='opcodes-cust.mako')
+
+    with open('opcodes-cust', 'w') as fh:
+        fh.write(opcodes_cust.render(name=model.name))
+
+
+def main():
+    model = parse_model()
+    create_file(model)
+
 
 if __name__ == '__main__':
-    parse_model()
+    main()
