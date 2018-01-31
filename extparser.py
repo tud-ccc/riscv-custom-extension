@@ -99,13 +99,13 @@ def create_opcode(models):
         content = fh.readlines()
 
     # first line number is 3
-    i = 0
-    while i < len(matches):
+    for i in range(0, len(masks)):
         content.insert(i + 3, masks[i])
         content.insert(i + 3, matches[i])
-        i += 1
 
-    print(content)
+    with open(opc, 'w') as fh:
+        content = ''.join(content)
+        fh.write(content)
 
 
 def main():
