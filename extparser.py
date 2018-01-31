@@ -83,6 +83,30 @@ def create_opcode(models):
 
     defines, _ = p.communicate(input=ops)
 
+    d = '\n'
+    lines = [e + d for e in defines.split(d)]
+
+    masks = [entry for entry in lines if entry.startswith('#define MASK')]
+    matches = [entry for entry in lines if entry.startswith('#define MATCH')]
+
+    assert len(masks) == len(matches), 'Length of mask and match arrays differ'
+
+    print(masks)
+    print(matches)
+
+    opc = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
+    with open(opc, 'r') as fh:
+        content = fh.readlines()
+
+    # first line number is 3
+    i = 0
+    while i < len(matches):
+        content.insert(i + 3, masks[i])
+        content.insert(i + 3, matches[i])
+        i += 1
+
+    print(content)
+
 
 def main():
     models = []
