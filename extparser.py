@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import clang.cindex
 import os
 import subprocess
@@ -166,6 +167,29 @@ def extend_assembler(models):
 
 
 def main():
+    '''
+    Main function.
+    '''
+
+    # argparsing
+    parser = argparse.ArgumentParser(
+        prog='extparser',
+        description='Parse reference implementations of custom extension ' +
+        'models.')
+
+    parser.add_argument('-v',
+                        '--verbosity',
+                        default=0,
+                        action='count',
+                        help='Increase output verbosity.')
+    parser.add_argument('-b',
+                        '--build',
+                        action='store_true',
+                        help='If set, Toolchain and Gem5 will be ' +
+                        'rebuild.')
+
+    parser.parse_args()
+
     models = []
     models.append(parse_model())
     extend_assembler(models)
