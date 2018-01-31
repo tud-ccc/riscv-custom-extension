@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import clang.cindex
-from mako.template import Template
+import os
 import subprocess
 import sys
+
+from mako.template import Template
 
 
 class Model:
@@ -72,11 +74,17 @@ def create_opcode(models):
 
     opcodes_cust = Template(filename='opcodes-cust.mako')
 
-    with open('opcodes-cust', 'w') as fh:
+    opc_cust = 'opcodes-cust'
+    with open(opc_cust, 'w') as fh:
         fh.write(opcodes_cust.render(models=models))
 
-    with open('opcodes-cust', 'r') as fh:
+    with open(opc_cust, 'r') as fh:
         ops = fh.read()
+
+    try:
+        os.remove(opc_cust)
+    except OSError:
+        pass
 
     p = subprocess.Popen(['riscv-opcodes/parse-opcodes',
                           '-c'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
