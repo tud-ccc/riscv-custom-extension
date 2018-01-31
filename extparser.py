@@ -2,10 +2,14 @@
 
 import clang.cindex
 from mako.template import Template
+import subprocess
 import sys
 
 
 class Model:
+    '''
+    C++ Reference of the custom instruction.
+    '''
 
     def __init__(self):
         # clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
@@ -51,28 +55,39 @@ class Model:
 
 
 def parse_model():
+    '''
+    Parse the c++ reference implementation
+    of the custom instruction.
+    '''
+
     model = Model()
-
-    name = model.name
-    print(name)
-
-    dfn = model.definition
-    print(dfn)
-
     return model
 
 
-def create_file(model):
+def create_opcode(models):
+    '''
+    Create a temporary file from which the opcode
+    of the custom instruction is going to be generated.
+    '''
 
     opcodes_cust = Template(filename='opcodes-cust.mako')
 
     with open('opcodes-cust', 'w') as fh:
-        fh.write(opcodes_cust.render(name=model.name))
+        fh.write(opcodes_cust.render(models=models))
+
+    with open('opcodes-cust', 'r') as fh:
+        ops = fh.read()
+
+    p = subprocess.Popen(['riscv-opcodes/parse-opcodes',
+                          '-c'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    defines, _ = p.communicate(input=ops)
 
 
 def main():
-    model = parse_model()
-    create_file(model)
+    models = []
+    models.append(parse_model())
+    create_opcode(models)
 
 
 if __name__ == '__main__':
