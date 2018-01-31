@@ -100,9 +100,6 @@ class Instructions:
         assert len(self._masks) == len(
             self._matches), 'Length of mask and match arrays differ'
 
-        print(self._masks)
-        print(self._matches)
-
     @property
     def models(self):
         return self._models
@@ -130,7 +127,7 @@ def parse_model():
     return model
 
 
-def create_opcode(models):
+def extend_assembler(models):
     '''
     Create a temporary file from which the opcode
     of the custom instruction is going to be generated.
@@ -149,7 +146,14 @@ def create_opcode(models):
         content = fh.readlines()
 
     for i in range(0, len(masks)):
-        # first line number is 3
+        # check if entry exists
+        # skip this instruction if so
+        # prevents double define for old custom extensions, if new one was
+        # added
+        if masks[i] in content:
+            continue
+
+        # first line number, where the new opcode can be inserted is 3
         content.insert(i + 3, masks[i])
         content.insert(i + 3, matches[i])
 
@@ -164,7 +168,7 @@ def create_opcode(models):
 def main():
     models = []
     models.append(parse_model())
-    create_opcode(models)
+    extend_assembler(models)
 
 
 if __name__ == '__main__':
