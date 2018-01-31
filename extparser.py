@@ -14,11 +14,13 @@ class Model:
     C++ Reference of the custom instruction.
     '''
 
-    def __init__(self):
+    def __init__(self, impl):
+        print(impl)
+
         # clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
         index = clang.cindex.Index.create()
         tu = index.parse(
-            sys.argv[1], ['-x', 'c++', '-std=c++11'])
+            impl, ['-x', 'c++', '-std=c++11'])
 
         self._name = ""
         self._dfn = ""
@@ -97,6 +99,10 @@ class Instructions:
             entry for entry in lines if entry.startswith('#define MASK')]
         self._matches = [
             entry for entry in lines if entry.startswith('#define MATCH')]
+        self._mask_names = [
+            entry for entry in self._masks for entry in entry.split()]
+
+        print(self._mask_names)
 
         assert len(self._masks) == len(
             self._matches), 'Length of mask and match arrays differ'
@@ -118,13 +124,13 @@ class Instructions:
         return self._matches
 
 
-def parse_model():
+def parse_model(args):
     '''
     Parse the c++ reference implementation
     of the custom instruction.
     '''
 
-    model = Model()
+    model = Model(args.model)
     return model
 
 
@@ -187,11 +193,19 @@ def main():
                         action='store_true',
                         help='If set, Toolchain and Gem5 will be ' +
                         'rebuild.')
+    parser.add_argument('-m',
+                        '--model',
+                        type=str,
+                        default=os.path.join(
+                            os.path.dirname(__file__),
+                            'extensions',
+                            'test.cc'),
+                        help='Reference implementation')
 
-    parser.parse_args()
+    args = parser.parse_args()
 
     models = []
-    models.append(parse_model())
+    models.append(parse_model(args))
     extend_assembler(models)
 
 
