@@ -383,7 +383,7 @@ def extend_source(insts):
             continue
 
         # build string that has to be added to the content of the file
-        dfn = '{{"{}",  "U",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
+        dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
             inst.name, inst.operands, inst.matchname, inst.maskname)
 
         # we simply add the instruction right before the termination of the
