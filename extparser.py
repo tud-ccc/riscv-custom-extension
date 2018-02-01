@@ -25,9 +25,9 @@ class Model:
         tu = index.parse(
             impl, ['-x', 'c++', '-std=c++11'])
 
-        self._name = ""
-        self._dfn = ""
-        self._form = "regreg"
+        self._name = ''
+        self._dfn = ''
+        self._form = 'regreg'
 
         self.method_name(tu.cursor)
         self.method_definitions(tu.cursor)
@@ -55,30 +55,27 @@ class Model:
         self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
 
     @property
-    def form(self):
-        return self._form
-
-    @property
     def definition(self):
         return self._dfn
+
+    @property
+    def form(self):
+        return self._form
 
     @property
     def name(self):
         return self._name
 
 
-class Instruction:
+class Operation:
     '''
-    Class, that represents one single custom instruction.
-    Contains the name, the mask and the match.
+    Represents one operation, that is parsed from each model.
     '''
 
-    def __init__(self, form, funct3, funct7, mask, match, name, opc):
+    def __init__(self, form, funct3, funct7, name, opc):
         self._form = form  # format
         self._funct3 = funct3  # funct3 encoding
         self._funct7 = funct7  # funct7 encoding, used by reg reg ops
-        self._mask = mask  # the mask name
-        self._match = match  # the match name
         self._name = name  # the name that shall occure in the assembler
         self._opc = opc  # opcode - inst[6:2]
 
@@ -95,6 +92,31 @@ class Instruction:
         return self._funct7
 
     @property
+    def name(self):
+        return self._name
+
+    @property
+    def opc(self):
+        return self._opc
+
+
+class Instruction:
+    '''
+    Class, that represents one single custom instruction.
+    Contains the name, the mask and the match.
+    '''
+
+    def __init__(self, form, mask, match, name):
+        self._form = form  # format
+        self._mask = mask  # the mask name
+        self._match = match  # the match name
+        self._name = name  # the name that shall occure in the assembler
+
+    @property
+    def form(self):
+        return self._form
+
+    @property
     def mask(self):
         return self._mask
 
@@ -106,23 +128,20 @@ class Instruction:
     def name(self):
         return self._name
 
-    @property
-    def opc(self):
-        return self._opc
-
 
 class Extensions:
     '''
     Has all necessary information about the custom instructions
-    that is needed to extend the RISC-V assembler.
+    that is needed to extend the RISC-V compiler.
     '''
 
     def __init__(self, models):
         self._models = models
+        self._ops = []
         self._insts = []
 
-        for model in models:
-            self.model_to_inst(model)
+    def models_to_ops(self):
+        pass
 
     def model_to_inst(self, model):
         opcodes_cust = Template(filename='opcodes-cust.mako')
@@ -187,14 +206,13 @@ class Extensions:
         return self._mask_names
 
 
-def parse_model(args):
+def parse_models(args):
     '''
     Parse the c++ reference implementation
     of the custom instruction.
     '''
-
     model = Model(args.model)
-    return model
+    return [model]
 
 
 def extend_assembler(models):
@@ -276,8 +294,9 @@ def main():
 
     logger.setLevel(50 - 10 * args.verbosity)
 
-    models = []
-    models.append(parse_model(args))
+    # start parsing the models
+    models = parse_models(args)
+    # extend assembler with models
     extend_assembler(models)
 
 
