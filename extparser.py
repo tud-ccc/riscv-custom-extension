@@ -46,9 +46,13 @@ class Model:
         for child in node.get_children():
             self.parse_model(child)
 
-        if node.kind == clang.cindex.CursorKind.FUNCTION_DECL:
+        # only set name if it's unset
+        # due to parsing of included header the function definition occures
+        # twice
+        if node.kind == clang.cindex.CursorKind.FUNCTION_DECL \
+                and self._name == '':
             self._name = node.spelling
-            logger.info("Function name: %s" % self._name)
+            logger.info("Function name: {}".format(self._name))
 
         if node.kind == clang.cindex.CursorKind.COMPOUND_STMT:
             logger.info("Model definition found")
@@ -79,8 +83,8 @@ class Model:
 
         self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
 
-        logger.info("Definintion in %s @ line %d" %
-                    (filename, node.location.line))
+        logger.info("Definintion in {} @ line {}".format(
+            filename, node.location.line))
         logger.info('Definition:\n%s' % self._dfn)
 
     def extract_value(self, node):
@@ -289,7 +293,8 @@ def extend_assembler(models):
         # added
         if inst.mask in content and inst.match in content:
             logger.info(
-                "Mask already in riscv-opc.h, therefore skip instertion")
+                "Mask {!r} and match {!r} ".format(inst.mask, inst.match) +
+                "already in riscv-opc.h. Therefore skip instertion")
             continue
 
         # check whether a mask or a match entry exists but not the
@@ -303,7 +308,9 @@ def extend_assembler(models):
         # first line number, where the new opcode can be inserted is 3
         # insert every entry at line number 3 --> push back the remaining
         # content
+        logger.info("Adding mask %s" % inst.mask)
         content.insert(3, inst.mask)
+        logger.info("Adding match %s" % inst.match)
         content.insert(3, inst.match)
 
     with open(opch, 'w') as fh:
