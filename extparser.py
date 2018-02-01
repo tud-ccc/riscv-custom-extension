@@ -2,11 +2,15 @@
 
 import argparse
 import clang.cindex
+import logging
 import os
 import subprocess
 import sys
 
 from mako.template import Template
+
+logging.basicConfig(stream=sys.stdout)
+logger = logging.getLogger(__name__)
 
 
 class Model:
@@ -58,7 +62,17 @@ class Model:
         return self._dfn
 
 
-class Instructions:
+class Instruction:
+    '''
+    Class, that represents one single custom instruction.
+    Contains the name, the mask and the match.
+    '''
+
+    def __init__(self):
+        pass
+
+
+class Extensions:
     '''
     Has all necessary information about the custom instructions
     that is needed to extend the RISC-V assembler.
@@ -184,8 +198,8 @@ def extend_assembler(models):
     inst_def = 'inst_def'
 
     with open(inst_def, 'w') as fh:
-            fh.write(inst_def_templ.render(instructions=instructions,
-                                           opcc=opcc))
+        fh.write(inst_def_templ.render(instructions=instructions,
+                                       opcc=opcc))
 
 
 def main():
@@ -219,6 +233,8 @@ def main():
                         help='Reference implementation')
 
     args = parser.parse_args()
+
+    logger.setLevel(50 - 10 * args.verbosity)
 
     models = []
     models.append(parse_model(args))

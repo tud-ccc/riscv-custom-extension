@@ -16,5 +16,5 @@
 				masks.remove(masks[i])
 %>\
 % for i in range(0, len(names)):
-{"${names[i]}",       "U",   "",  ${matches[i]}, ${masks[i]}, match_opcode, 0 }
+{"${names[i]}",       "U",   "d,s,t",  ${matches[i]}, ${masks[i]}, match_opcode, 0 }
 % endfor
