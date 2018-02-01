@@ -20,39 +20,71 @@ class Model:
 
     def __init__(self, impl):
 
+        clang.cindex.Config.set_library_file('/usr/lib64/llvm/libclang.so')
         # clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
-        index = clang.cindex.Index.create()
-        tu = index.parse(
-            impl, ['-x', 'c++', '-std=c++11'])
 
-        self._name = ''
+        logger.info("Using libclang at %s" % clang.cindex.Config.library_file)
+
+        index = clang.cindex.Index.create()
+        tu = index.parse(impl, ['-x', 'c++', '-std=c++11'])
+
         self._dfn = ''
         self._form = 'regreg'
+        self._funct3 = 0x0
+        self._funct7 = 0x0
+        self._name = ''
+        self._opc = 0x0
 
-        self.method_name(tu.cursor)
-        self.method_definitions(tu.cursor)
+        logger.info("Parsing model @ %s" % impl)
 
-    def method_name(self, node):
+        self.parse_model(tu.cursor)
+
+    def parse_model(self, node):
         for child in node.get_children():
-            self.method_name(child)
+            self.parse_model(child)
 
         if node.kind == clang.cindex.CursorKind.FUNCTION_DECL:
-            # print(node.spelling)
             self._name = node.spelling
-
-    def method_definitions(self, node):
-        for child in node.get_children():
-            self.method_definitions(child)
+            logger.info("Function name: %s" % self._name)
 
         if node.kind == clang.cindex.CursorKind.COMPOUND_STMT:
+            logger.info("Model definition found")
             self.extract_definition(node)
+
+        if node.kind == clang.cindex.CursorKind.VAR_DECL \
+                and node.spelling == 'opc':
+            logger.info('Model opcode found')
+            self.extract_value(node)
+
+        if node.kind == clang.cindex.CursorKind.VAR_DECL \
+                and node.spelling == 'funct3':
+            logger.info('Model funct3 found')
+            self.extract_value(node)
+
+        if node.kind == clang.cindex.CursorKind.VAR_DECL \
+                and node.spelling == 'funct3':
+            logger.info('Model funct7 found')
+            self.extract_value(node)
 
     def extract_definition(self, node):
         filename = node.location.file.name
+
+        logger.info("Definintion in %s @ line %d" %
+                    (filename, node.location.line))
+
         with open(filename, 'r') as fh:
             contents = fh.read()
         # print(contents[node.extent.start.offset: node.extent.end.offset])
         self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
+
+        logger.info('Definition:\n%s' % self._dfn)
+
+    def extract_value(self, node):
+        for entry in list(node.get_tokens()):
+            if entry.spelling.startswith("0x"):
+                self._opc = int(entry.spelling, 0)
+
+                logger.info('Value: %s' % hex(self._opc))
 
     @property
     def definition(self):
@@ -63,8 +95,20 @@ class Model:
         return self._form
 
     @property
+    def funct3(self):
+        return self._funct3
+
+    @property
+    def funct7(self):
+        return self._funct7
+
+    @property
     def name(self):
         return self._name
+
+    @property
+    def opc(self):
+        return self._opc
 
 
 class Operation:
