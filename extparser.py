@@ -124,6 +124,8 @@ class Model:
 class Operation:
     '''
     Represents one operation, that is parsed from each model.
+    This class is just used temporarily on the way to create
+    instructions from the models.
     '''
 
     def __init__(self, form, funct3, funct7, name, opc):
@@ -160,11 +162,28 @@ class Instruction:
     Contains the name, the mask and the match.
     '''
 
-    def __init__(self, form, mask, match, name):
+    def __init__(self, form, mask, maskname, match, matchname, name):
         self._form = form  # format
-        self._mask = mask  # the mask name
-        self._match = match  # the match name
+        self._mask = mask  # the whole mask string
+        self._maskname = maskname  # the mask name
+        self._match = match  # the whole match string
+        self._matchname = matchname  # the match name
         self._name = name  # the name that shall occure in the assembler
+
+        # set right operands that are used in binutils' opc parsing
+        # d -> Rd
+        # s -> Rs1
+        # t -> Rs2
+        # j -> imm
+        if form == 'regreg':
+            # operands for Rd, Rs1, Rs2
+            self._operands = 'd,s,t'
+        elif form == 'regimm':
+            # operands for Rd, Rs1, imm
+            self._operands = 'd,s,j'
+        else:
+            logger.warn('Instruction format unnokwn. ' +
+                        'Leaving operands field empty.')
 
     @property
     def form(self):
@@ -175,12 +194,24 @@ class Instruction:
         return self._mask
 
     @property
+    def maskname(self):
+        return self._maskname
+
+    @property
     def match(self):
         return self._match
 
     @property
+    def matchname(self):
+        return self._matchname
+
+    @property
     def name(self):
         return self._name
+
+    @property
+    def operands(self):
+        return self._operands
 
 
 class Extensions:
@@ -234,8 +265,14 @@ class Extensions:
 
         masks = [
             entry for entry in lines if entry.startswith('#define MASK')]
+        masknames = [
+            entry for entry in masks for entry in entry.split()
+            if entry.startswith('MASK')]
         matches = [
             entry for entry in lines if entry.startswith('#define MATCH')]
+        matchnames = [
+            entry for entry in matches for entry in entry.split()
+            if entry.startswith('MATCH')]
 
         assert len(masks) == len(
             matches), 'Length of mask and match arrays differ'
@@ -243,7 +280,9 @@ class Extensions:
         for i in range(0, len(self._ops)):
             inst = Instruction(self._models[i].form,
                                masks[i],
+                               masknames[i],
                                matches[i],
+                               matchnames[i],
                                self._models[i].name)
             self._insts.append(inst)
 
@@ -269,19 +308,14 @@ def parse_models(args):
     return [model]
 
 
-def extend_assembler(models):
+def extend_header(insts):
     '''
-    Create a temporary file from which the opcode
-    of the custom instruction is going to be generated.
+    Extend the header file riscv-opc.h with the generated masks and matches
+    of the custom instructions.
     '''
-    extensions = Extensions(models)
 
-    insts = extensions.instructions
-
-    # files that needs to be edited
+    # header file that needs to be edited
     opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
-    opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
-
     # the mask and match defines has to be added in the header file
     with open(opch, 'r') as fh:
         content = fh.readlines()
@@ -295,6 +329,8 @@ def extend_assembler(models):
             logger.info(
                 "Mask {!r} and match {!r} ".format(inst.mask, inst.match) +
                 "already in riscv-opc.h. Therefore skip instertion")
+            # remove instruction from list to prevent generating duplicates
+            # insts.remove(inst)
             continue
 
         # check whether a mask or a match entry exists but not the
@@ -303,6 +339,8 @@ def extend_assembler(models):
             logger.warn(
                 "Mask or match already existing, but the other not. " +
                 "Skip insertion")
+            # remove instruction from list to prevent generating duplicates
+            insts.remove(inst)
             continue
 
         # first line number, where the new opcode can be inserted is 3
@@ -313,19 +351,75 @@ def extend_assembler(models):
         logger.info("Adding match %s" % inst.match)
         content.insert(3, inst.match)
 
+    # write back modified content
     with open(opch, 'w') as fh:
         content = ''.join(content)
         fh.write(content)
 
-    # in the c file the asm instruction is defined
-    # build string that has to be inserted
 
-    inst_def_templ = Template(filename='inst-definition.mako')
-    inst_def = 'inst_def'
+def extend_source(insts):
+    '''
+    Extend the source file riscv-opc.c with information about the
+    custom instructions.
+    '''
 
-    with open(inst_def, 'w') as fh:
-        fh.write(inst_def_templ.render(extensions=extensions,
-                                       opcc=opcc))
+    # c source file that needs to be edited
+    opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
+    # read source file
+    with open(opcc, 'r') as fh:
+        content = fh.readlines()
+
+    for inst in insts:
+        # check if entry exists
+        # skip this instruction if so
+        # prevents double define for old custom extensions, if new one was
+        # added
+        if any(inst.name in string for string in content):
+            logger.info(
+                'Instruction {} already defined. Skip instertion'.format(
+                    inst.name))
+            # remove instruction from list
+            insts.remove(inst)
+            continue
+
+        # build string that has to be added to the content of the file
+        dfn = '{{"{}",  "U",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
+            inst.name, inst.operands, inst.matchname, inst.maskname)
+
+        # we simply add the instruction right before the termination of the
+        # list in riscv-opc.c
+        try:
+            line = content.index('/* Terminate the list.  */\n') - 1
+        except ValueError:
+            # choose random line number near the end of the file
+            line = len(content) - 4
+
+        logger.info('Adding instruction {}'.format(inst.name))
+        content.insert(line, dfn)
+
+    # write back modified content
+    with open(opcc, 'w') as fh:
+        content = ''.join(content)
+        fh.write(content)
+
+
+def extend_comiler(models):
+    '''
+    Calls functions to extend necessary header and c files.
+    After that, the toolchain will be rebuild.
+    Then the compiler should know the custom instructions.
+    '''
+    insts = Extensions(models).instructions
+
+    # in the meantime instructions may been deletet from the list
+    # insts = extend_header(insts)
+    extend_header(insts)
+
+    # return value should be the same as the function parameter because in
+    # extend_headers all previously included instructions should have been
+    # removed.
+    # insts = extend_source(insts)
+    extend_source(insts)
 
 
 def main():
@@ -364,8 +458,8 @@ def main():
 
     # start parsing the models
     models = parse_models(args)
-    # extend assembler with models
-    extend_assembler(models)
+    # extend comiler with models
+    extend_comiler(models)
 
 
 if __name__ == '__main__':
