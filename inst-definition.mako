@@ -1,7 +1,7 @@
 <%
-	names = instructions.funcnames
-	matches = instructions.matchnames
-	masks = instructions.masknames
+	names = extensions.funcnames
+	matches = extensions.matchnames
+	masks = extensions.masknames
 
 	# remove items from lists, that are already in
 	with open(opcc, 'r') as fh:

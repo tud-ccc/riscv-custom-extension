@@ -27,6 +27,7 @@ class Model:
 
         self._name = ""
         self._dfn = ""
+        self._form = "regreg"
 
         self.method_name(tu.cursor)
         self.method_definitions(tu.cursor)
@@ -54,12 +55,16 @@ class Model:
         self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
 
     @property
-    def name(self):
-        return self._name
+    def form(self):
+        return self._form
 
     @property
     def definition(self):
         return self._dfn
+
+    @property
+    def name(self):
+        return self._name
 
 
 class Instruction:
@@ -68,8 +73,42 @@ class Instruction:
     Contains the name, the mask and the match.
     '''
 
-    def __init__(self):
-        pass
+    def __init__(self, form, funct3, funct7, mask, match, name, opc):
+        self._form = form  # format
+        self._funct3 = funct3  # funct3 encoding
+        self._funct7 = funct7  # funct7 encoding, used by reg reg ops
+        self._mask = mask  # the mask name
+        self._match = match  # the match name
+        self._name = name  # the name that shall occure in the assembler
+        self._opc = opc  # opcode - inst[6:2]
+
+    @property
+    def form(self):
+        return self._form
+
+    @property
+    def funct3(self):
+        return self._funct3
+
+    @property
+    def funct7(self):
+        return self._funct7
+
+    @property
+    def mask(self):
+        return self._mask
+
+    @property
+    def match(self):
+        return self._match
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def opc(self):
+        return self._opc
 
 
 class Extensions:
@@ -80,11 +119,12 @@ class Extensions:
 
     def __init__(self, models):
         self._models = models
-        self._names = [model.name for model in models]
+        self._insts = []
 
-        self.generate_opc()
+        for model in models:
+            self.model_to_inst(model)
 
-    def generate_opc(self):
+    def model_to_inst(self, model):
         opcodes_cust = Template(filename='opcodes-cust.mako')
 
         opc_cust = 'opcodes-cust'
@@ -162,10 +202,10 @@ def extend_assembler(models):
     Create a temporary file from which the opcode
     of the custom instruction is going to be generated.
     '''
-    instructions = Instructions(models)
+    extensions = Extensions(models)
 
-    masks = instructions.masks
-    matches = instructions.matches
+    masks = extensions.masks
+    matches = extensions.matches
 
     # files that needs to be edited
     opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
@@ -198,7 +238,7 @@ def extend_assembler(models):
     inst_def = 'inst_def'
 
     with open(inst_def, 'w') as fh:
-        fh.write(inst_def_templ.render(instructions=instructions,
+        fh.write(inst_def_templ.render(extensions=extensions,
                                        opcc=opcc))
 
 
