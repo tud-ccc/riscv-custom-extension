@@ -40,6 +40,9 @@ class Model:
         self.parse_model(tu.cursor)
 
     def parse_model(self, node):
+        '''
+        Parse the model and search for all necessary information.
+        '''
         for child in node.get_children():
             self.parse_model(child)
 
@@ -54,37 +57,40 @@ class Model:
         if node.kind == clang.cindex.CursorKind.VAR_DECL \
                 and node.spelling == 'opc':
             logger.info('Model opcode found')
-            self.extract_value(node)
+            self._opc = self.extract_value(node)
 
         if node.kind == clang.cindex.CursorKind.VAR_DECL \
                 and node.spelling == 'funct3':
             logger.info('Model funct3 found')
-            self.extract_value(node)
+            self._funct3 = self.extract_value(node)
 
         if node.kind == clang.cindex.CursorKind.VAR_DECL \
                 and node.spelling == 'funct3':
             logger.info('Model funct7 found')
-            self.extract_value(node)
+            self._funct7 = self.extract_value(node)
 
     def extract_definition(self, node):
+        '''
+        Extract a function definition.
+        '''
         filename = node.location.file.name
+        with open(filename, 'r') as fh:
+            contents = fh.read()
+
+        self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
 
         logger.info("Definintion in %s @ line %d" %
                     (filename, node.location.line))
-
-        with open(filename, 'r') as fh:
-            contents = fh.read()
-        # print(contents[node.extent.start.offset: node.extent.end.offset])
-        self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
-
         logger.info('Definition:\n%s' % self._dfn)
 
     def extract_value(self, node):
+        '''
+        Extract a variable value.
+        '''
         for entry in list(node.get_tokens()):
             if entry.spelling.startswith("0x"):
-                self._opc = int(entry.spelling, 0)
-
-                logger.info('Value: %s' % hex(self._opc))
+                logger.info('Value: %s' % entry.spelling)
+                return int(entry.spelling, 0)
 
     @property
     def definition(self):
@@ -184,15 +190,26 @@ class Extensions:
         self._ops = []
         self._insts = []
 
-    def models_to_ops(self):
-        pass
+        self.models_to_ops()
+        self.ops_to_insts()
 
-    def model_to_inst(self, model):
+    def models_to_ops(self):
+        logger.info("Generate operations from models")
+
+        for model in self._models:
+            op = Operation(model.form,
+                           model.funct3,
+                           model.funct7,
+                           model.name,
+                           model.opc)
+            self._ops.append(op)
+
+    def ops_to_insts(self):
         opcodes_cust = Template(filename='opcodes-cust.mako')
 
         opc_cust = 'opcodes-cust'
         with open(opc_cust, 'w') as fh:
-            fh.write(opcodes_cust.render(models=self._models))
+            fh.write(opcodes_cust.render(operations=self._ops))
 
         with open(opc_cust, 'r') as fh:
             ops = fh.read()
@@ -211,43 +228,32 @@ class Extensions:
         d = '\n'
         lines = [e + d for e in defines.split(d)]
 
-        self._masks = [
+        masks = [
             entry for entry in lines if entry.startswith('#define MASK')]
-        self._matches = [
+        matches = [
             entry for entry in lines if entry.startswith('#define MATCH')]
-        self._mask_names = [
-            entry for entry in self._masks for entry in entry.split()
-            if entry.startswith('MASK')]
-        self._match_names = [
-            entry for entry in self._matches for entry in entry.split()
-            if entry.startswith('MATCH')]
 
-        assert len(self._masks) == len(
-            self._matches), 'Length of mask and match arrays differ'
+        assert len(masks) == len(
+            matches), 'Length of mask and match arrays differ'
+
+        for i in range(0, len(self._ops)):
+            inst = Instruction(self._models[i].form,
+                               masks[i],
+                               matches[i],
+                               self._models[i].name)
+            self._insts.append(inst)
 
     @property
     def models(self):
         return self._models
 
     @property
-    def funcnames(self):
-        return self._names
+    def operations(self):
+        return self._ops
 
     @property
-    def matches(self):
-        return self._matches
-
-    @property
-    def masks(self):
-        return self._masks
-
-    @property
-    def matchnames(self):
-        return self._match_names
-
-    @property
-    def masknames(self):
-        return self._mask_names
+    def instructions(self):
+        return self._insts
 
 
 def parse_models(args):
@@ -266,8 +272,7 @@ def extend_assembler(models):
     '''
     extensions = Extensions(models)
 
-    masks = extensions.masks
-    matches = extensions.matches
+    insts = extensions.instructions
 
     # files that needs to be edited
     opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
@@ -277,17 +282,29 @@ def extend_assembler(models):
     with open(opch, 'r') as fh:
         content = fh.readlines()
 
-    for i in range(0, len(masks)):
+    for inst in insts:
         # check if entry exists
         # skip this instruction if so
         # prevents double define for old custom extensions, if new one was
         # added
-        if masks[i] in content:
+        if inst.mask in content and inst.match in content:
+            logger.info(
+                "Mask already in riscv-opc.h, therefore skip instertion")
+            continue
+
+        # check whether a mask or a match entry exists but not the
+        # corresponding other
+        if inst.mask in content or inst.match in content:
+            logger.warn(
+                "Mask or match already existing, but the other not. " +
+                "Skip insertion")
             continue
 
         # first line number, where the new opcode can be inserted is 3
-        content.insert(i + 3, masks[i])
-        content.insert(i + 3, matches[i])
+        # insert every entry at line number 3 --> push back the remaining
+        # content
+        content.insert(3, inst.mask)
+        content.insert(3, inst.match)
 
     with open(opch, 'w') as fh:
         content = ''.join(content)
