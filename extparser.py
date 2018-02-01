@@ -205,9 +205,9 @@ class Extensions:
             self._ops.append(op)
 
     def ops_to_insts(self):
-        opcodes_cust = Template(filename='opcodes-cust.mako')
+        opcodes_cust = Template(filename='opcodes-custom.mako')
 
-        opc_cust = 'opcodes-cust'
+        opc_cust = 'opcodes-custom'
         with open(opc_cust, 'w') as fh:
             fh.write(opcodes_cust.render(operations=self._ops))
 
