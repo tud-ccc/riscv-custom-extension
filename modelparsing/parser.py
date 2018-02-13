@@ -214,6 +214,7 @@ class Instruction:
         else:
             logger.warn('Instruction format unnokwn. ' +
                         'Leaving operands field empty.')
+            self.operands = ''
 
     @property
     def form(self):
