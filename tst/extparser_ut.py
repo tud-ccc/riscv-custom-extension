@@ -1,11 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 import unittest
 import sys
 
+sys.path.append('..')
+from modelparsing.parser import Operation
+sys.path.remove('..')
+
 
 class TestModel(unittest.TestCase):
-    def testOne(self):
+    def testModel(self):
         pass
 
 
@@ -21,8 +25,18 @@ class TestOperation(unittest.TestCase):
         self.name = 'test'
         self.opc = 0x03
 
-    def testOne(self):
-        pass
+        self.op = Operation(self.form,
+                            self.funct3,
+                            self.funct7,
+                            self.name,
+                            self.opc)
+
+    def testOperation(self):
+        self.assertEqual(self.op.form, self.form)
+        self.assertEqual(self.op.funct3, self.funct3)
+        self.assertEqual(self.op.funct7, self.funct7)
+        self.assertEqual(self.op.name, self.name)
+        self.assertEqual(self.op.opc, self.opc)
 
 
 if __name__ == '__main__':

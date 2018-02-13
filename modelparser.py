@@ -4,7 +4,7 @@ import argparse
 import logging
 import logging.handlers
 import os
-from parser.parser import Parser
+from modelparsing.parser import Parser
 
 # get root logger
 root_logger = logging.getLogger()

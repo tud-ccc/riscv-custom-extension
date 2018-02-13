@@ -270,7 +270,7 @@ class Extensions:
             self._ops.append(op)
 
     def ops_to_insts(self):
-        opcodes_cust = Template(filename='parser/opcodes-custom.mako')
+        opcodes_cust = Template(filename='modelparsing/opcodes-custom.mako')
 
         opc_cust = 'opcodes-custom'
         with open(opc_cust, 'w') as fh:
