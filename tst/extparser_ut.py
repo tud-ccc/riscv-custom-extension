@@ -54,7 +54,8 @@ class TestModel(unittest.TestCase):
                 self.op2 = ''
 
     def setUp(self):
-        self.ccmodels = {}
+        self.ccpropermodels = {}
+        self.ccflawedmodels = {}
         # create different models
         # the more the better
 
@@ -67,7 +68,7 @@ class TestModel(unittest.TestCase):
         funct7 = 0x01
         filename = 'test_models/' + name + '.cc'
 
-        self.ccmodels[filename] = self.Model(
+        self.ccpropermodels[filename] = self.Model(
             name, ftype, inttype, opc, funct3, funct7)
 
         # map itype.cc
@@ -78,10 +79,17 @@ class TestModel(unittest.TestCase):
         funct3 = 0x07
         filename = 'test_models/' + name + '.cc'
 
-        self.ccmodels[filename] = self.Model(
+        self.ccpropermodels[filename] = self.Model(
             name, ftype, inttype, opc, funct3)
 
-        for filename, ccmodel in self.ccmodels.items():
+        for filename, ccmodel in self.ccpropermodels.items():
+            # generate .cc models
+            modelgen = Template(filename='test_models/model-gen.mako')
+
+            with open(filename, 'w') as fh:
+                fh.write(modelgen.render(model=ccmodel))
+
+        for filename, ccmodel in self.ccflawedmodels.items():
             # generate .cc models
             modelgen = Template(filename='test_models/model-gen.mako')
 
@@ -90,22 +98,26 @@ class TestModel(unittest.TestCase):
 
     def testProperModels(self):
         # parse models and check if information have been retrieved correctly
-        for filename, ccmodel in self.ccmodels.items():
+        for filename, ccmodel in self.ccpropermodels.items():
             # parse models
-            if not ccmodel.faults:
-                model = Model(filename)
+            model = Model(filename)
 
-                self.assertEqual(model.form, ccmodel.ftype,
+            self.assertEqual(model.form, ccmodel.ftype,
+                             msg='model name = {}'.format(filename))
+            self.assertEqual(model.funct3, ccmodel.funct3,
+                             msg='model name = {}'.format(filename))
+            if model.form == 'R':
+                self.assertEqual(model.funct7, ccmodel.funct7,
                                  msg='model name = {}'.format(filename))
-                self.assertEqual(model.funct3, ccmodel.funct3,
-                                 msg='model name = {}'.format(filename))
-                if model.form == 'R':
-                    self.assertEqual(model.funct7, ccmodel.funct7,
-                                     msg='model name = {}'.format(filename))
-                self.assertEqual(model.name, ccmodel.name,
-                                 msg='model name = {}'.format(filename))
-                self.assertEqual(model.opc, ccmodel.opc,
-                                 msg='model name = {}'.format(filename))
+            self.assertEqual(model.name, ccmodel.name,
+                             msg='model name = {}'.format(filename))
+            self.assertEqual(model.opc, ccmodel.opc,
+                             msg='model name = {}'.format(filename))
+
+    def testFlawedModels(self):
+        # test the faulty models
+        # check whether the exceptions where thrown correctly
+        pass
 
     def tearDown(self):
         pass
