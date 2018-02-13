@@ -3,8 +3,11 @@
 import unittest
 import sys
 
+from mako.template import Template
+
 sys.path.append('..')
 from modelparsing.parser import Instruction
+from modelparsing.parser import Model
 from modelparsing.parser import Operation
 sys.path.remove('..')
 
@@ -14,7 +17,97 @@ class TestModel(unittest.TestCase):
     Test, that check if model parser works correctly.
     '''
 
-    def testModel(self):
+    class Model:
+        '''
+        Gather all information that is used to generate a model.
+        '''
+
+        def __init__(self, name, ftype, inttype, opc, funct3, funct7=0xff, faults=[]):
+            self.name = name
+            self.ftype = ftype
+            self.inttype = inttype
+            self.opc = opc
+            self.funct3 = funct3
+            self.funct7 = funct7
+            self.faults = faults
+
+            self.rd = 'Rd_uw'
+            self.op1 = 'Rs1_uw'
+
+            # inttypes
+            if inttype == 'uint32_t':
+                opsuf = '_uw'
+            elif inttype == 'int32_t':
+                opsuf = '_sw'
+            elif inttype == 'uint64_t':
+                opsuf = '_ud'
+            elif inttype == 'int64_t':
+                opsuf = '_sd'
+            else:
+                opsuf = ''
+
+            if ftype == 'R':
+                self.op2 = 'Rs2' + opsuf
+            elif ftype == 'I':
+                self.op2 = 'imm'
+            else:
+                self.op2 = ''
+
+    def setUp(self):
+        self.ccmodels = {}
+        # create different models
+        # the more the better
+
+        # map rtype.cc -- should be correct
+        name = 'rtype'
+        ftype = 'R'
+        inttype = 'uint32_t'
+        opc = 0x02
+        funct3 = 0x03
+        funct7 = 0x01
+        filename = 'test_models/' + name + '.cc'
+
+        self.ccmodels[filename] = self.Model(
+            name, ftype, inttype, opc, funct3, funct7)
+
+        # map itype.cc
+        name = 'itype'
+        ftype = 'I'
+        inttype = 'uint32_t'
+        opc = 0x0a
+        funct3 = 0x07
+        filename = 'test_models/' + name + '.cc'
+
+        self.ccmodels[filename] = self.Model(
+            name, ftype, inttype, opc, funct3)
+
+        for filename, ccmodel in self.ccmodels.items():
+            # generate .cc models
+            modelgen = Template(filename='test_models/model-gen.mako')
+
+            with open(filename, 'w') as fh:
+                fh.write(modelgen.render(model=ccmodel))
+
+    def testProperModels(self):
+        # parse models and check if information have been retrieved correctly
+        for filename, ccmodel in self.ccmodels.items():
+            # parse models
+            if not ccmodel.faults:
+                model = Model(filename)
+
+                self.assertEqual(model.form, ccmodel.ftype,
+                                 msg='model name = {}'.format(filename))
+                self.assertEqual(model.funct3, ccmodel.funct3,
+                                 msg='model name = {}'.format(filename))
+                if model.form == 'R':
+                    self.assertEqual(model.funct7, ccmodel.funct7,
+                                     msg='model name = {}'.format(filename))
+                self.assertEqual(model.name, ccmodel.name,
+                                 msg='model name = {}'.format(filename))
+                self.assertEqual(model.opc, ccmodel.opc,
+                                 msg='model name = {}'.format(filename))
+
+    def tearDown(self):
         pass
 
 

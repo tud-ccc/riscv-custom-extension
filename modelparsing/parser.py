@@ -17,9 +17,10 @@ class Model:
     '''
 
     def __init__(self, impl):
-
-        clang.cindex.Config.set_library_file('/usr/lib64/llvm/libclang.so')
-        # clang.cindex.Config.set_library_file('/usr/lib/llvm-4.0/lib/libclang-4.0.so')
+        '''
+        Init method, that takes the location of
+        the implementation as an argument.
+        '''
 
         logger.info("Using libclang at %s" % clang.cindex.Config.library_file)
 
@@ -67,6 +68,8 @@ class Model:
             if node.spelling == 'opc':
                 logger.info('Model opcode found')
                 self._opc = self.extract_value(node)
+                if self._opc not in [0x02, 0x0a, 0x16, 0x1e]:
+                    raise ValueError(self._opc, 'Invalid opcode.')
             # funct3 bitfield
             if node.spelling == 'funct3':
                 logger.info('Model funct3 found')
@@ -111,7 +114,7 @@ class Model:
         Extract a variable value.
         '''
         for entry in list(node.get_tokens()):
-            if entry.spelling.startswith("0x"):
+            if entry.spelling[0].isdigit():
                 logger.info('Value: %s' % entry.spelling)
                 return int(entry.spelling, 0)
 
