@@ -1,9 +1,9 @@
 <%
 %>\
 % for operation in operations:
-% if operation.form == 'regreg':
+% if operation.form == 'R':
 ${operation.name} rd rs1 rs2 31..25=${operation.funct7} 14..12=${operation.funct3} 6..2=${operation.opc} 1..0=3
-% elif operation.form == 'regimm':
+% elif operation.form == 'I':
 ${operation.name} rd rs1 imm12 14..12=${operation.funct3} 6..2=${operation.opc} 1..0=3
 % else:
 Format not supported.

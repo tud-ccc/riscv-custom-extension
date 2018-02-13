@@ -28,12 +28,16 @@ class Model:
         index = clang.cindex.Index.create()
         tu = index.parse(impl, ['-x', 'c++', '-std=c++11'])
 
-        self._dfn = ''
-        self._form = 'regreg'
-        self._funct3 = 0x0
-        self._funct7 = 0x0
-        self._name = ''
-        self._opc = 0x0
+        # information to retrieve form model
+        self._dfn = ''              # definition
+        self._form = ''             # format
+        self._funct3 = 0x0          # funct3 bit field
+        self._funct7 = 0x0          # funct7 bit field
+        self._name = ''             # name
+        self._opc = 0x0             # opcode
+        # model consistency checks
+        self._check_rd = False      # check if rd is defined
+        self._check_rs1 = False     # check if rs1 is defined
 
         logger.info("Parsing model @ %s" % impl)
 
@@ -58,20 +62,34 @@ class Model:
             logger.info("Model definition found")
             self.extract_definition(node)
 
-        if node.kind == clang.cindex.CursorKind.VAR_DECL \
-                and node.spelling == 'opc':
-            logger.info('Model opcode found')
-            self._opc = self.extract_value(node)
+        if node.kind == clang.cindex.CursorKind.VAR_DECL:
+            # process all variable declarations
+            # opcode
+            if node.spelling == 'opc':
+                logger.info('Model opcode found')
+                self._opc = self.extract_value(node)
+            # funct3 bitfield
+            if node.spelling == 'funct3':
+                logger.info('Model funct3 found')
+                self._funct3 = self.extract_value(node)
+            # funct7 bitfield, only for R-Type
+            if node.spelling == 'funct7':
+                logger.info('Model funct7 found')
+                self._funct7 = self.extract_value(node)
 
-        if node.kind == clang.cindex.CursorKind.VAR_DECL \
-                and node.spelling == 'funct3':
-            logger.info('Model funct3 found')
-            self._funct3 = self.extract_value(node)
+        if node.kind == clang.cindex.CursorKind.PARM_DECL:
+            # process all parameter declarations
+            # check if Rd and Rs1 exists
+            if node.spelling.startswith('Rd'):
+                self._check_rd = True
+            if node.spelling.startswith('Rs1'):
+                self._check_rs1 = True
 
-        if node.kind == clang.cindex.CursorKind.VAR_DECL \
-                and node.spelling == 'funct3':
-            logger.info('Model funct7 found')
-            self._funct7 = self.extract_value(node)
+            # determine, if function is R-Type or I-Type
+            if node.spelling.startswith('Rs2'):
+                self._form = 'R'
+            if node.spelling.startswith('imm'):
+                self._form = 'I'
 
     def extract_definition(self, node):
         '''
@@ -175,10 +193,10 @@ class Instruction:
         # s -> Rs1
         # t -> Rs2
         # j -> imm
-        if form == 'regreg':
+        if form == 'R':
             # operands for Rd, Rs1, Rs2
             self._operands = 'd,s,t'
-        elif form == 'regimm':
+        elif form == 'I':
             # operands for Rd, Rs1, imm
             self._operands = 'd,s,j'
         else:
