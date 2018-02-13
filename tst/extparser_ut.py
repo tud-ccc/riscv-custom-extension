@@ -10,6 +10,17 @@ class TestModel(unittest.TestCase):
 
 
 class TestOperation(unittest.TestCase):
+    '''
+    Tests for all functions in class Operation
+    '''
+
+    def setUp(self):
+        self.form = 'R'
+        self.funct3 = 0x01
+        self.funct7 = 0x02
+        self.name = 'test'
+        self.opc = 0x03
+
     def testOne(self):
         pass
 

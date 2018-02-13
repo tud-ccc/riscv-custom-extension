@@ -4,11 +4,10 @@ import clang.cindex
 import logging
 import os
 import subprocess
-import sys
 
 from mako.template import Template
 
-logging.basicConfig(stream=sys.stdout)
+
 logger = logging.getLogger(__name__)
 
 
