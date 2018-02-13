@@ -42,6 +42,7 @@ class Model:
         logger.info("Parsing model @ %s" % impl)
 
         self.parse_model(tu.cursor)
+        self.check_consistency()
 
     def parse_model(self, node):
         '''
@@ -87,8 +88,10 @@ class Model:
 
             # determine, if function is R-Type or I-Type
             if node.spelling.startswith('Rs2'):
+                logger.info('Model is of format R-Type')
                 self._form = 'R'
             if node.spelling.startswith('imm'):
+                logger.info('Model is of format I-Type')
                 self._form = 'I'
 
     def extract_definition(self, node):
@@ -113,6 +116,17 @@ class Model:
             if entry.spelling.startswith("0x"):
                 logger.info('Value: %s' % entry.spelling)
                 return int(entry.spelling, 0)
+
+    def check_consistency(self):
+        '''
+        Check whether a model fulfills all consistency requirements.
+        '''
+        logger.info('Check consistency of model definition')
+
+        assert self._check_rd, 'Model definition requires parameter Rd'
+        assert self._check_rs1, 'Model definition requires parameter Rs1'
+
+        logger.info('Model meets requirements')
 
     @property
     def definition(self):
