@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import argparse
 import clang.cindex
 import logging
 import os
@@ -272,7 +271,7 @@ class Extensions:
             self._ops.append(op)
 
     def ops_to_insts(self):
-        opcodes_cust = Template(filename='opcodes-custom.mako')
+        opcodes_cust = Template(filename='parser/opcodes-custom.mako')
 
         opc_cust = 'opcodes-custom'
         with open(opc_cust, 'w') as fh:
@@ -331,168 +330,136 @@ class Extensions:
         return self._insts
 
 
-def parse_models(args):
+class Parser:
     '''
-    Parse the c++ reference implementation
-    of the custom instruction.
-    '''
-    model = Model(args.model)
-    return [model]
-
-
-def extend_header(insts):
-    '''
-    Extend the header file riscv-opc.h with the generated masks and matches
-    of the custom instructions.
+    This class stepwise calls all the functions necessary to parse modules
+    and retrieve the information necessary to extend gnu binutils and gem5.
     '''
 
-    # header file that needs to be edited
-    opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
-    # the mask and match defines has to be added in the header file
-    with open(opch, 'r') as fh:
-        content = fh.readlines()
+    def __init__(self, args):
+        self._args = args
+        self._models = []
 
-    for inst in insts:
-        # check if entry exists
-        # skip this instruction if so
-        # prevents double define for old custom extensions, if new one was
-        # added
-        if inst.mask in content and inst.match in content:
-            logger.info(
-                "Mask {!r} and match {!r} ".format(inst.mask, inst.match) +
-                "already in riscv-opc.h. Therefore skip instertion")
-            # remove instruction from list to prevent generating duplicates
-            # insts.remove(inst)
-            continue
+        # start parsing the models
+        self.parse_models()
+        # extend comiler with models
+        self.extend_comiler()
 
-        # check whether a mask or a match entry exists but not the
-        # corresponding other
-        if inst.mask in content or inst.match in content:
-            logger.warn(
-                "Mask or match already existing, but the other not. " +
-                "Skip insertion")
-            # remove instruction from list to prevent generating duplicates
-            insts.remove(inst)
-            continue
+    def parse_models(self):
+        '''
+        Parse the c++ reference implementation
+        of the custom instruction.
+        '''
+        model = Model(self._args.model)
+        self._models.append(model)
 
-        # first line number, where the new opcode can be inserted is 3
-        # insert every entry at line number 3 --> push back the remaining
-        # content
-        logger.info("Adding mask %s" % inst.mask)
-        content.insert(3, inst.mask)
-        logger.info("Adding match %s" % inst.match)
-        content.insert(3, inst.match)
+    def extend_header(self):
+        '''
+        Extend the header file riscv-opc.h with the generated masks and matches
+        of the custom instructions.
+        '''
 
-    # write back modified content
-    with open(opch, 'w') as fh:
-        content = ''.join(content)
-        fh.write(content)
+        # header file that needs to be edited
+        opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
+        # the mask and match defines has to be added in the header file
+        with open(opch, 'r') as fh:
+            content = fh.readlines()
 
+        for inst in self._insts:
+            # check if entry exists
+            # skip this instruction if so
+            # prevents double define for old custom extensions, if new one was
+            # added
+            if inst.mask in content and inst.match in content:
+                logger.info(
+                    "Mask {!r} and match {!r} ".format(inst.mask, inst.match) +
+                    "already in riscv-opc.h. Therefore skip instertion")
+                # remove instruction from list to prevent generating duplicates
+                # insts.remove(inst)
+                continue
 
-def extend_source(insts):
-    '''
-    Extend the source file riscv-opc.c with information about the
-    custom instructions.
-    '''
+            # check whether a mask or a match entry exists but not the
+            # corresponding other
+            if inst.mask in content or inst.match in content:
+                logger.warn(
+                    "Mask or match already existing, but the other not. " +
+                    "Skip insertion")
+                # remove instruction from list to prevent generating duplicates
+                self._insts.remove(inst)
+                continue
 
-    # c source file that needs to be edited
-    opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
-    # read source file
-    with open(opcc, 'r') as fh:
-        content = fh.readlines()
+            # first line number, where the new opcode can be inserted is 3
+            # insert every entry at line number 3 --> push back the remaining
+            # content
+            logger.info("Adding mask %s" % inst.mask)
+            content.insert(3, inst.mask)
+            logger.info("Adding match %s" % inst.match)
+            content.insert(3, inst.match)
 
-    for inst in insts:
-        # check if entry exists
-        # skip this instruction if so
-        # prevents double define for old custom extensions, if new one was
-        # added
-        if any(inst.name in string for string in content):
-            logger.info(
-                'Instruction {} already defined. Skip instertion'.format(
-                    inst.name))
-            # remove instruction from list
-            insts.remove(inst)
-            continue
+        # write back modified content
+        with open(opch, 'w') as fh:
+            content = ''.join(content)
+            fh.write(content)
 
-        # build string that has to be added to the content of the file
-        dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
-            inst.name, inst.operands, inst.matchname, inst.maskname)
+    def extend_source(self):
+        '''
+        Extend the source file riscv-opc.c with information about the
+        custom instructions.
+        '''
 
-        # we simply add the instruction right before the termination of the
-        # list in riscv-opc.c
-        try:
-            line = content.index('/* Terminate the list.  */\n') - 1
-        except ValueError:
-            # choose random line number near the end of the file
-            line = len(content) - 4
+        # c source file that needs to be edited
+        opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
+        # read source file
+        with open(opcc, 'r') as fh:
+            content = fh.readlines()
 
-        logger.info('Adding instruction {}'.format(inst.name))
-        content.insert(line, dfn)
+        for inst in self._insts:
+            # check if entry exists
+            # skip this instruction if so
+            # prevents double define for old custom extensions, if new one was
+            # added
+            if any(inst.name in string for string in content):
+                logger.info(
+                    'Instruction {} already defined. Skip instertion'.format(
+                        inst.name))
+                # remove instruction from list
+                self._insts.remove(inst)
+                continue
 
-    # write back modified content
-    with open(opcc, 'w') as fh:
-        content = ''.join(content)
-        fh.write(content)
+            # build string that has to be added to the content of the file
+            dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
+                inst.name, inst.operands, inst.matchname, inst.maskname)
 
+            # we simply add the instruction right before the termination of the
+            # list in riscv-opc.c
+            try:
+                line = content.index('/* Terminate the list.  */\n') - 1
+            except ValueError:
+                # choose random line number near the end of the file
+                line = len(content) - 4
 
-def extend_comiler(models):
-    '''
-    Calls functions to extend necessary header and c files.
-    After that, the toolchain will be rebuild.
-    Then the compiler should know the custom instructions.
-    '''
-    insts = Extensions(models).instructions
+            logger.info('Adding instruction {}'.format(inst.name))
+            content.insert(line, dfn)
 
-    # in the meantime instructions may been deletet from the list
-    # insts = extend_header(insts)
-    extend_header(insts)
+        # write back modified content
+        with open(opcc, 'w') as fh:
+            content = ''.join(content)
+            fh.write(content)
 
-    # return value should be the same as the function parameter because in
-    # extend_headers all previously included instructions should have been
-    # removed.
-    # insts = extend_source(insts)
-    extend_source(insts)
+    def extend_comiler(self):
+        '''
+        Calls functions to extend necessary header and c files.
+        After that, the toolchain will be rebuild.
+        Then the compiler should know the custom instructions.
+        '''
+        self._insts = Extensions(self._models).instructions
 
+        # in the meantime instructions may been deletet from the list
+        # insts = extend_header(insts)
+        self.extend_header()
 
-def main():
-    '''
-    Main function.
-    '''
-
-    # argparsing
-    parser = argparse.ArgumentParser(
-        prog='extparser',
-        description='Parse reference implementations of custom extension ' +
-        'models.')
-
-    parser.add_argument('-v',
-                        '--verbosity',
-                        default=0,
-                        action='count',
-                        help='Increase output verbosity.')
-    parser.add_argument('-b',
-                        '--build',
-                        action='store_true',
-                        help='If set, Toolchain and Gem5 will be ' +
-                        'rebuild.')
-    parser.add_argument('-m',
-                        '--model',
-                        type=str,
-                        default=os.path.join(
-                            os.path.dirname(__file__),
-                            'extensions',
-                            'test.cc'),
-                        help='Reference implementation')
-
-    args = parser.parse_args()
-
-    logger.setLevel(50 - 10 * args.verbosity)
-
-    # start parsing the models
-    models = parse_models(args)
-    # extend comiler with models
-    extend_comiler(models)
-
-
-if __name__ == '__main__':
-    main()
+        # return value should be the same as the function parameter because in
+        # extend_headers all previously included instructions should have been
+        # removed.
+        # insts = extend_source(insts)
+        self.extend_source()
