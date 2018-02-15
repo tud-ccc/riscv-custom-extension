@@ -6,6 +6,7 @@ import sys
 from mako.template import Template
 
 sys.path.append('..')
+from modelparsing.exceptions import ConsistencyError
 from modelparsing.parser import Instruction
 from modelparsing.parser import Model
 from modelparsing.parser import Operation
@@ -31,8 +32,14 @@ class TestModel(unittest.TestCase):
             self.funct7 = funct7
             self.faults = faults
 
-            self.rd = 'Rd_uw'
-            self.op1 = 'Rs1_uw'
+            if 'nord' in faults:
+                self.rd = ''
+            else:
+                self.rd = 'Rd_uw'
+            if 'noop1' in faults:
+                self.op1 = ''
+            else:
+                self.op1 = 'Rs1_uw'
 
             # inttypes
             if inttype == 'uint32_t':
@@ -54,11 +61,10 @@ class TestModel(unittest.TestCase):
                 self.op2 = ''
 
     def setUp(self):
-        self.ccpropermodels = {}
-        self.ccflawedmodels = {}
-        # create different models
-        # the more the better
+        # save all models in which parser caused an error to not remove them
+        self.errmodels = []
 
+    def testRTypeModel(self):
         # map rtype.cc -- should be correct
         name = 'rtype'
         ftype = 'R'
@@ -68,9 +74,26 @@ class TestModel(unittest.TestCase):
         funct7 = 0x01
         filename = 'test_models/' + name + '.cc'
 
-        self.ccpropermodels[filename] = self.Model(
+        ccmodel = self.Model(
             name, ftype, inttype, opc, funct3, funct7)
 
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        # parse model
+        model = Model(filename)
+
+        # check parsed models for expected values
+        self.assertEqual(model.form, ccmodel.ftype)
+        self.assertEqual(model.funct3, ccmodel.funct3)
+        self.assertEqual(model.funct7, ccmodel.funct7)
+        self.assertEqual(model.name, ccmodel.name)
+        self.assertEqual(model.opc, ccmodel.opc)
+
+    def testITypeModel(self):
         # map itype.cc
         name = 'itype'
         ftype = 'I'
@@ -79,45 +102,64 @@ class TestModel(unittest.TestCase):
         funct3 = 0x07
         filename = 'test_models/' + name + '.cc'
 
-        self.ccpropermodels[filename] = self.Model(
+        ccmodel = self.Model(
             name, ftype, inttype, opc, funct3)
 
-        for filename, ccmodel in self.ccpropermodels.items():
-            # generate .cc models
-            modelgen = Template(filename='test_models/model-gen.mako')
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
 
-            with open(filename, 'w') as fh:
-                fh.write(modelgen.render(model=ccmodel))
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
 
-        for filename, ccmodel in self.ccflawedmodels.items():
-            # generate .cc models
-            modelgen = Template(filename='test_models/model-gen.mako')
+        # parse model
+        model = Model(filename)
 
-            with open(filename, 'w') as fh:
-                fh.write(modelgen.render(model=ccmodel))
+        # check parsed models for expected values
+        self.assertEqual(model.form, ccmodel.ftype)
+        self.assertEqual(model.funct3, ccmodel.funct3)
+        self.assertEqual(model.name, ccmodel.name)
+        self.assertEqual(model.opc, ccmodel.opc)
 
-    def testProperModels(self):
-        # parse models and check if information have been retrieved correctly
-        for filename, ccmodel in self.ccpropermodels.items():
-            # parse models
-            model = Model(filename)
+    def testNoRdModel(self):
+        # no opcode specified
+        name = 'nord'
+        ftype = 'I'
+        inttype = 'uint32_t'
+        opc = 0x0a
+        funct3 = 0x07
+        filename = 'test_models/' + name + '.cc'
 
-            self.assertEqual(model.form, ccmodel.ftype,
-                             msg='model name = {}'.format(filename))
-            self.assertEqual(model.funct3, ccmodel.funct3,
-                             msg='model name = {}'.format(filename))
-            if model.form == 'R':
-                self.assertEqual(model.funct7, ccmodel.funct7,
-                                 msg='model name = {}'.format(filename))
-            self.assertEqual(model.name, ccmodel.name,
-                             msg='model name = {}'.format(filename))
-            self.assertEqual(model.opc, ccmodel.opc,
-                             msg='model name = {}'.format(filename))
+        ccmodel = self.Model(
+            name, ftype, inttype, opc, funct3, faults=['nord'])
 
-    def testFlawedModels(self):
-        # test the faulty models
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.assertRaises(ConsistencyError, Model, filename)
+
+    def testWrongOpcModel(self):
+        # wrong opcode given
+        name = 'wrongopc'
+        ftype = 'I'
+        inttype = 'uint32_t'
+        opc = 0x10
+        funct3 = 0x00
+        filename = 'test_models/' + name + '.cc'
+
+        ccmodel = self.Model(
+            name, ftype, inttype, opc, funct3, faults=['wrongopc'])
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
         # check whether the exceptions where thrown correctly
-        pass
+        self.assertRaises(ValueError, Model, filename)
 
     def tearDown(self):
         pass

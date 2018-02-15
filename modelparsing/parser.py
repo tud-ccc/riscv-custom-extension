@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 import clang.cindex
 import logging
 import os
 import subprocess
 
+from exceptions import ConsistencyError
 from mako.template import Template
 
 
@@ -68,8 +67,6 @@ class Model:
             if node.spelling == 'opc':
                 logger.info('Model opcode found')
                 self._opc = self.extract_value(node)
-                if self._opc not in [0x02, 0x0a, 0x16, 0x1e]:
-                    raise ValueError(self._opc, 'Invalid opcode.')
             # funct3 bitfield
             if node.spelling == 'funct3':
                 logger.info('Model funct3 found')
@@ -124,8 +121,15 @@ class Model:
         '''
         logger.info('Check consistency of model definition')
 
-        assert self._check_rd, 'Model definition requires parameter Rd'
-        assert self._check_rs1, 'Model definition requires parameter Rs1'
+        if not self._check_rd:
+            raise ConsistencyError(
+                self._check_rd, 'Model definition requires parameter Rd')
+        if not self._check_rs1:
+            raise ConsistencyError(
+                self._check_rs1, 'Model definition requires parameter Rs1')
+
+        if self._opc not in [0x02, 0x0a, 0x16, 0x1e]:
+            raise ValueError(self._opc, 'Invalid opcode.')
 
         logger.info('Model meets requirements')
 

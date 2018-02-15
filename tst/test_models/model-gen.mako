@@ -11,7 +11,19 @@ uint8_t opc    = ${model.opc};  // opc, 5 bits
 uint8_t funct3 = ${model.funct3};  // funct3, 3 bits
 % endif
 
-void ${model.name}(${model.inttype} ${model.rd}, ${model.inttype} ${model.op1}, ${model.inttype} ${model.op2})
+void ${model.name}(${opperands()})
 {
     // function body
 }
+
+<%def name="opperands()">
+	% if model.rd is not '':
+		${model.inttype} ${model.rd},
+	% endif
+	% if model.op1 is not '':
+		${model.inttype} ${model.op1},
+	% endif
+	% if model.op2:
+		${model.inttype} ${model.op2},
+	% endif
+</%def>
