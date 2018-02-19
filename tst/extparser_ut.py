@@ -328,6 +328,27 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             Model(filename)
 
+    def testExtractDefinitionModel(self):
+        name = 'extract'
+        filename = 'test_models/' + name + '.cc'
+
+        ccmodel = self.Model(
+            name, self.ftype, self.inttype, self.opc, self.funct3)
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels.append(filename)
+
+        # parse model
+        model = Model(filename)
+
+        self.assertEqual(model.definition,
+            '{\n    // function body\n}')
+
 
 class TestOperation(unittest.TestCase):
     '''
