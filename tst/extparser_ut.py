@@ -200,6 +200,29 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             Model(filename)
 
+    def testWrongFunct3Model(self):
+        name = 'wrongfunct3'
+        self.funct3 = 0xaa
+        filename = 'test_models/' + name + '.cc'
+
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3,
+                             faults=['wrongfunct3'])
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels = filename
+
+        with self.assertRaises(ValueError):
+            Model(filename)
+
 
 class TestOperation(unittest.TestCase):
     '''
