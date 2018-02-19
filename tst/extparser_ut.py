@@ -154,14 +154,14 @@ class TestModel(unittest.TestCase):
     def testNoRs1Model(self):
         # no rs1 specified
         name = 'nors1'
-        ftype = 'I'
-        inttype = 'uint32_t'
-        opc = 0x0a
-        funct3 = 0x07
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(
-            name, ftype, inttype, opc, funct3, faults=['noop1'])
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3,
+                             faults=['noop1'])
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
@@ -211,6 +211,31 @@ class TestModel(unittest.TestCase):
                              self.opc,
                              self.funct3,
                              faults=['wrongfunct3'])
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels = filename
+
+        with self.assertRaises(ValueError):
+            Model(filename)
+
+    def testWrongFunct7Model(self):
+        name = 'wrongfunct7'
+        self.ftype = 'R'
+        funct7 = 0xaa
+        filename = 'test_models' + name + '.cc'
+
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3,
+                             funct7,
+                             faults=['wrongfunct7'])
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
