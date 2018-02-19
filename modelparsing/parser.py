@@ -29,8 +29,8 @@ class Model:
         # information to retrieve form model
         self._dfn = ''              # definition
         self._form = ''             # format
-        self._funct3 = 0x0          # funct3 bit field
-        self._funct7 = 0x0          # funct7 bit field
+        self._funct3 = 0xff         # funct3 bit field
+        self._funct7 = 0xff         # funct7 bit field
         self._name = ''             # name
         self._opc = 0x0             # opcode
         # model consistency checks
@@ -130,6 +130,13 @@ class Model:
 
         if self._opc not in [0x02, 0x0a, 0x16, 0x1e]:
             raise ValueError(self._opc, 'Invalid opcode.')
+
+        # funct3 --> 3 bits
+        if self._funct3 > 0x7:
+            raise ValueError(self._funct3, 'Invalid funct3.')
+        # funct7 --> 7 bits
+        if self._form == 'R' and self._funct7 > 0x7f:
+            raise ValueError(self._funct7, 'Invalid funct7.')
 
         logger.info('Model meets requirements')
 
