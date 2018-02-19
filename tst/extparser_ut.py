@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 
-import unittest
+import os
 import sys
+import unittest
 
 from mako.template import Template
 
@@ -61,8 +62,12 @@ class TestModel(unittest.TestCase):
                 self.op2 = ''
 
     def setUp(self):
-        # save all models in which parser caused an error to not remove them
-        self.errmodels = []
+        # save all models and remove them after the test
+        self.tstmodels = ''
+
+    def tearDown(self):
+        #remove generated file
+        os.remove(self.tstmodels)
 
     def testRTypeModel(self):
         # map rtype.cc -- should be correct
@@ -82,6 +87,8 @@ class TestModel(unittest.TestCase):
 
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels = filename
 
         # parse model
         model = Model(filename)
@@ -111,6 +118,8 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
+        self.tstmodels = filename
+
         # parse model
         model = Model(filename)
 
@@ -138,6 +147,8 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
+        self.tstmodels = filename
+
         self.assertRaises(ConsistencyError, Model, filename)
 
     def testWrongOpcModel(self):
@@ -158,11 +169,10 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
+        self.tstmodels = filename
+
         # check whether the exceptions where thrown correctly
         self.assertRaises(ValueError, Model, filename)
-
-    def tearDown(self):
-        pass
 
 
 class TestOperation(unittest.TestCase):
