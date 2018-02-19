@@ -63,7 +63,7 @@ class TestModel(unittest.TestCase):
 
     def setUp(self):
         # save all models and remove them after the test
-        self.tstmodels = ''
+        self.tstmodels = []
 
         self.ftype = 'I'
         self.inttype = 'uint32_t'
@@ -72,7 +72,8 @@ class TestModel(unittest.TestCase):
 
     def tearDown(self):
         # remove generated file
-        os.remove(self.tstmodels)
+        for model in self.tstmodels:
+            os.remove(model)
 
     def testRTypeModel(self):
         # map rtype.cc -- should be correct
@@ -91,7 +92,7 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         # parse model
         model = Model(filename)
@@ -117,7 +118,7 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         # parse model
         model = Model(filename)
@@ -146,7 +147,7 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
@@ -169,7 +170,7 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
@@ -194,13 +195,42 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         # check whether the exceptions where thrown correctly
         with self.assertRaises(ValueError):
             Model(filename)
 
     def testWrongFunct3Model(self):
+        # max funct3
+        name = 'rightfunct3'
+        self.funct3 = 0x07
+        filename = 'test_models/' + name + '.cc'
+
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3)
+
+        # generate .cc model
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels.append(filename)
+
+        # parse model
+        model = Model(filename)
+
+        # check parsed models for expected values
+        self.assertEqual(model.form, ccmodel.ftype)
+        self.assertEqual(model.funct3, ccmodel.funct3)
+        self.assertEqual(model.name, ccmodel.name)
+        self.assertEqual(model.opc, ccmodel.opc)
+
+        # now a wrong model
         name = 'wrongfunct3'
         self.funct3 = 0xaa
         filename = 'test_models/' + name + '.cc'
@@ -218,12 +248,44 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         with self.assertRaises(ValueError):
             Model(filename)
 
     def testWrongFunct7Model(self):
+        # max funct7
+        name = 'rightfunct7'
+        self.ftype = 'R'
+        funct7 = 0x7f
+        filename = 'test_models/' + name + '.cc'
+
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3,
+                             funct7)
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels.append(filename)
+
+        # parse model
+        model = Model(filename)
+
+        # check parsed models for expected values
+        self.assertEqual(model.form, ccmodel.ftype)
+        self.assertEqual(model.funct3, ccmodel.funct3)
+        self.assertEqual(model.funct7, ccmodel.funct7)
+        self.assertEqual(model.name, ccmodel.name)
+        self.assertEqual(model.opc, ccmodel.opc)
+
+        # wrong funct7
         name = 'wrongfunct7'
         self.ftype = 'R'
         funct7 = 0xaa
@@ -243,7 +305,7 @@ class TestModel(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=ccmodel))
 
-        self.tstmodels = filename
+        self.tstmodels.append(filename)
 
         with self.assertRaises(ValueError):
             Model(filename)
