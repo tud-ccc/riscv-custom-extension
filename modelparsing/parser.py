@@ -138,6 +138,11 @@ class Model:
         if self._form == 'R' and self._funct7 > 0x7f:
             raise ValueError(self._funct7, 'Invalid funct7.')
 
+        # does the definition starts and end with a bracket
+        if not self._dfn.startswith('{'):
+            raise ConsistencyError(
+                self._dfn, 'Function definition not found.')
+
         logger.info('Model meets requirements')
 
     @property

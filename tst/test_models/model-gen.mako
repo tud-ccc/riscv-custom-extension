@@ -12,9 +12,7 @@ uint8_t funct3 = ${model.funct3};  // funct3, 3 bits
 % endif
 
 void ${model.name}(${opperands()})
-{
-    // function body
-}
+${model.dfn}
 
 <%def name="opperands()">
 	% if model.rd is not '':

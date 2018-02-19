@@ -24,7 +24,7 @@ class TestModel(unittest.TestCase):
         Gather all information that is used to generate a model.
         '''
 
-        def __init__(self, name, ftype, inttype, opc, funct3, funct7=0xff, faults=[]):
+        def __init__(self, name, ftype, inttype, opc, funct3, funct7, faults):
             self.name = name
             self.ftype = ftype
             self.inttype = inttype
@@ -41,6 +41,11 @@ class TestModel(unittest.TestCase):
                 self.op1 = ''
             else:
                 self.op1 = 'Rs1_uw'
+
+            if 'nodef' in faults:
+                self.dfn = ';'
+            else:
+                self.dfn = '{\n    // function definition\n}'
 
             # inttypes
             if inttype == 'uint32_t':
@@ -93,6 +98,26 @@ class TestModel(unittest.TestCase):
             for model in self.tstmodels:
                 os.remove(model)
 
+    def genModel(self, name, filename, funct7=0xff, faults=[]):
+        '''
+        Create local cc Model and from that cc file.
+        '''
+        self.ccmodel = self.Model(name,
+                                  self.ftype,
+                                  self.inttype,
+                                  self.opc,
+                                  self.funct3,
+                                  funct7,
+                                  faults)
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=self.ccmodel))
+
+        self.tstmodels.append(filename)
+
     def testRTypeModel(self):
         # map rtype.cc -- should be correct
         name = 'rtype'
@@ -101,71 +126,40 @@ class TestModel(unittest.TestCase):
         funct7 = 0x01
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(
-            name, self.ftype, self.inttype, self.opc, self.funct3, funct7)
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, funct7)
 
         # parse model
         model = Model(filename)
 
         # check parsed models for expected values
-        self.assertEqual(model.form, ccmodel.ftype)
-        self.assertEqual(model.funct3, ccmodel.funct3)
-        self.assertEqual(model.funct7, ccmodel.funct7)
-        self.assertEqual(model.name, ccmodel.name)
-        self.assertEqual(model.opc, ccmodel.opc)
+        self.assertEqual(model.form, self.ccmodel.ftype)
+        self.assertEqual(model.funct3, self.ccmodel.funct3)
+        self.assertEqual(model.funct7, self.ccmodel.funct7)
+        self.assertEqual(model.name, self.ccmodel.name)
+        self.assertEqual(model.opc, self.ccmodel.opc)
 
     def testITypeModel(self):
         # map itype.cc
         name = 'itype'
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(
-            name, self.ftype, self.inttype, self.opc, self.funct3)
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename)
 
         # parse model
         model = Model(filename)
 
         # check parsed models for expected values
-        self.assertEqual(model.form, ccmodel.ftype)
-        self.assertEqual(model.funct3, ccmodel.funct3)
-        self.assertEqual(model.name, ccmodel.name)
-        self.assertEqual(model.opc, ccmodel.opc)
+        self.assertEqual(model.form, self.ccmodel.ftype)
+        self.assertEqual(model.funct3, self.ccmodel.funct3)
+        self.assertEqual(model.name, self.ccmodel.name)
+        self.assertEqual(model.opc, self.ccmodel.opc)
 
     def testNoRdModel(self):
         # no opcode specified
         name = 'nord'
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3,
-                             faults=['nord'])
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, faults=['nord'])
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
@@ -175,20 +169,7 @@ class TestModel(unittest.TestCase):
         name = 'nors1'
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3,
-                             faults=['noop1'])
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, faults=['noop1'])
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
@@ -200,20 +181,7 @@ class TestModel(unittest.TestCase):
         self.funct3 = 0x00
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3,
-                             faults=['wrongopc'])
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, faults=['wrongopc'])
 
         # check whether the exceptions where thrown correctly
         with self.assertRaises(ValueError):
@@ -225,48 +193,23 @@ class TestModel(unittest.TestCase):
         self.funct3 = 0x07
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3)
-
-        # generate .cc model
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename)
 
         # parse model
         model = Model(filename)
 
         # check parsed models for expected values
-        self.assertEqual(model.form, ccmodel.ftype)
-        self.assertEqual(model.funct3, ccmodel.funct3)
-        self.assertEqual(model.name, ccmodel.name)
-        self.assertEqual(model.opc, ccmodel.opc)
+        self.assertEqual(model.form, self.ccmodel.ftype)
+        self.assertEqual(model.funct3, self.ccmodel.funct3)
+        self.assertEqual(model.name, self.ccmodel.name)
+        self.assertEqual(model.opc, self.ccmodel.opc)
 
         # now a wrong model
         name = 'wrongfunct3'
         self.funct3 = 0xaa
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3,
-                             faults=['wrongfunct3'])
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, faults=['wrongfunct3'])
 
         with self.assertRaises(ValueError):
             Model(filename)
@@ -278,30 +221,17 @@ class TestModel(unittest.TestCase):
         funct7 = 0x7f
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3,
-                             funct7)
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, funct7=funct7)
 
         # parse model
         model = Model(filename)
 
         # check parsed models for expected values
-        self.assertEqual(model.form, ccmodel.ftype)
-        self.assertEqual(model.funct3, ccmodel.funct3)
-        self.assertEqual(model.funct7, ccmodel.funct7)
-        self.assertEqual(model.name, ccmodel.name)
-        self.assertEqual(model.opc, ccmodel.opc)
+        self.assertEqual(model.form, self.ccmodel.ftype)
+        self.assertEqual(model.funct3, self.ccmodel.funct3)
+        self.assertEqual(model.funct7, self.ccmodel.funct7)
+        self.assertEqual(model.name, self.ccmodel.name)
+        self.assertEqual(model.opc, self.ccmodel.opc)
 
         # wrong funct7
         name = 'wrongfunct7'
@@ -309,21 +239,7 @@ class TestModel(unittest.TestCase):
         funct7 = 0xaa
         filename = 'test_models' + name + '.cc'
 
-        ccmodel = self.Model(name,
-                             self.ftype,
-                             self.inttype,
-                             self.opc,
-                             self.funct3,
-                             funct7,
-                             faults=['wrongfunct7'])
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename, funct7=funct7)
 
         with self.assertRaises(ValueError):
             Model(filename)
@@ -332,22 +248,22 @@ class TestModel(unittest.TestCase):
         name = 'extract'
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(
-            name, self.ftype, self.inttype, self.opc, self.funct3)
-
-        # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
-
-        with open(filename, 'w') as fh:
-            fh.write(modelgen.render(model=ccmodel))
-
-        self.tstmodels.append(filename)
+        self.genModel(name, filename)
 
         # parse model
         model = Model(filename)
 
         self.assertEqual(model.definition,
-            '{\n    // function body\n}')
+                         '{\n    // function definition\n}')
+
+    def testNoDefinitionModel(self):
+        name = 'nodef'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['nodef'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
 
 
 class TestOperation(unittest.TestCase):
