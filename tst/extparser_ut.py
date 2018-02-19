@@ -16,7 +16,7 @@ sys.path.remove('..')
 
 class TestModel(unittest.TestCase):
     '''
-    Test, that check if model parser works correctly.
+    Test that checks if model parser works correctly.
     '''
 
     class Model:
@@ -72,8 +72,26 @@ class TestModel(unittest.TestCase):
 
     def tearDown(self):
         # remove generated file
-        for model in self.tstmodels:
-            os.remove(model)
+        if hasattr(self, '_outcome'):  # Python 3.4+
+            # these 2 methods have no side effects
+            result = self.defaultTestResult()
+            self._feedErrorsToResult(result, self._outcome.errors)
+        else:
+            # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
+            result = getattr(self, '_outcomeForDoCleanups',
+                             self._resultForDoCleanups)
+
+        error = ''
+        if result.errors and result.errors[-1][0] is self:
+            error = result.errors[-1][1]
+
+        failure = ''
+        if result.failures and result.failures[-1][0] is self:
+            failure = result.failures[-1][1]
+
+        if not error and not failure:
+            for model in self.tstmodels:
+                os.remove(model)
 
     def testRTypeModel(self):
         # map rtype.cc -- should be correct
