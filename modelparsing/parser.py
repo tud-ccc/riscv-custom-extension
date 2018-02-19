@@ -142,6 +142,9 @@ class Model:
         if not self._dfn.startswith('{'):
             raise ConsistencyError(
                 self._dfn, 'Function definition not found.')
+        if not self._dfn.endswith('}'):
+            raise ConsistencyError(
+                self._dfn, 'Closing bracket missing.')
 
         logger.info('Model meets requirements')
 

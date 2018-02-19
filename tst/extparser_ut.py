@@ -44,6 +44,8 @@ class TestModel(unittest.TestCase):
 
             if 'nodef' in faults:
                 self.dfn = ';'
+            elif 'noclose' in faults:
+                self.dfn = '{\n    // function definition\n'
             else:
                 self.dfn = '{\n    // function definition\n}'
 
@@ -261,6 +263,15 @@ class TestModel(unittest.TestCase):
         filename = 'test_models/' + name + '.cc'
 
         self.genModel(name, filename, faults=['nodef'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoClosingBracket(self):
+        name = 'noclose'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['noclose'])
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
