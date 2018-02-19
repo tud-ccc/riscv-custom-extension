@@ -65,22 +65,25 @@ class TestModel(unittest.TestCase):
         # save all models and remove them after the test
         self.tstmodels = ''
 
+        self.ftype = 'I'
+        self.inttype = 'uint32_t'
+        self.opc = 0x0a
+        self.funct3 = 0x07
+
     def tearDown(self):
-        #remove generated file
+        # remove generated file
         os.remove(self.tstmodels)
 
     def testRTypeModel(self):
         # map rtype.cc -- should be correct
         name = 'rtype'
-        ftype = 'R'
-        inttype = 'uint32_t'
-        opc = 0x02
-        funct3 = 0x03
+        self.ftype = 'R'
+        self.opc = 0x02
         funct7 = 0x01
         filename = 'test_models/' + name + '.cc'
 
         ccmodel = self.Model(
-            name, ftype, inttype, opc, funct3, funct7)
+            name, self.ftype, self.inttype, self.opc, self.funct3, funct7)
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
@@ -103,14 +106,10 @@ class TestModel(unittest.TestCase):
     def testITypeModel(self):
         # map itype.cc
         name = 'itype'
-        ftype = 'I'
-        inttype = 'uint32_t'
-        opc = 0x0a
-        funct3 = 0x07
         filename = 'test_models/' + name + '.cc'
 
         ccmodel = self.Model(
-            name, ftype, inttype, opc, funct3)
+            name, self.ftype, self.inttype, self.opc, self.funct3)
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
@@ -132,14 +131,14 @@ class TestModel(unittest.TestCase):
     def testNoRdModel(self):
         # no opcode specified
         name = 'nord'
-        ftype = 'I'
-        inttype = 'uint32_t'
-        opc = 0x0a
-        funct3 = 0x07
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(
-            name, ftype, inttype, opc, funct3, faults=['nord'])
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3,
+                             faults=['nord'])
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
@@ -149,19 +148,45 @@ class TestModel(unittest.TestCase):
 
         self.tstmodels = filename
 
-        self.assertRaises(ConsistencyError, Model, filename)
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoRs1Model(self):
+        # no rs1 specified
+        name = 'nors1'
+        ftype = 'I'
+        inttype = 'uint32_t'
+        opc = 0x0a
+        funct3 = 0x07
+        filename = 'test_models/' + name + '.cc'
+
+        ccmodel = self.Model(
+            name, ftype, inttype, opc, funct3, faults=['noop1'])
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=ccmodel))
+
+        self.tstmodels = filename
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
 
     def testWrongOpcModel(self):
         # wrong opcode given
         name = 'wrongopc'
-        ftype = 'I'
-        inttype = 'uint32_t'
-        opc = 0x10
-        funct3 = 0x00
+        self.opc = 0x10
+        self.funct3 = 0x00
         filename = 'test_models/' + name + '.cc'
 
-        ccmodel = self.Model(
-            name, ftype, inttype, opc, funct3, faults=['wrongopc'])
+        ccmodel = self.Model(name,
+                             self.ftype,
+                             self.inttype,
+                             self.opc,
+                             self.funct3,
+                             faults=['wrongopc'])
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
@@ -172,7 +197,8 @@ class TestModel(unittest.TestCase):
         self.tstmodels = filename
 
         # check whether the exceptions where thrown correctly
-        self.assertRaises(ValueError, Model, filename)
+        with self.assertRaises(ValueError):
+            Model(filename)
 
 
 class TestOperation(unittest.TestCase):
