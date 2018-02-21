@@ -421,7 +421,6 @@ class Parser:
         Remove all custom extensions.
         May be only used for unit tests.
         '''
-        self._insts = Extensions(self._models).instructions
 
         # read header file
         with open(self.opch, 'r') as fh:
@@ -458,8 +457,11 @@ class Parser:
         Parse the c++ reference implementation
         of the custom instruction.
         '''
+        # TODO: traverse over dir
         model = Model(self._args.model)
         self._models.append(model)
+
+        self._insts = Extensions(self._models).instructions
 
     def extend_compiler(self):
         '''
@@ -467,7 +469,6 @@ class Parser:
         After that, the toolchain will be rebuild.
         Then the compiler should know the custom instructions.
         '''
-        self._insts = Extensions(self._models).instructions
 
         # in the meantime instructions may been deletet from the list
         # insts = extend_header(insts)
