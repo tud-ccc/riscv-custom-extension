@@ -14,7 +14,8 @@ from modelparsing.parser import Operation
 from modelparsing.parser import Parser
 sys.path.remove('..')
 
-folderpath = 'test_models/'
+folderpath = os.path.dirname(os.path.realpath(__file__)) + '/tmpfiles/'
+
 
 class CCModel:
     '''
@@ -143,6 +144,19 @@ class TestModel(unittest.TestCase):
     '''
     Test that checks if model parser works correctly.
     '''
+
+    def __init__(self, *args, **kwargs):
+        super(TestModel, self).__init__(*args, **kwargs)
+        # create temp folder
+        if not os.path.isdir(folderpath):
+            os.mkdir(folderpath)
+
+    def __del__(self):
+        if os.path.isdir(folderpath) and not os.listdir(folderpath):
+            try:
+                os.rmdir(folderpath)
+            except OSError:
+                pass
 
     def setUp(self):
         # save all models and remove them after the test
@@ -398,7 +412,7 @@ class TestModel(unittest.TestCase):
             Model(filename)
 
     def testReturnInFctBody(self):
-        name = 'ret'
+        name = 'retfct'
         filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['return'])
@@ -407,7 +421,7 @@ class TestModel(unittest.TestCase):
             Model(filename)
 
     def testNonVoidFct(self):
-        name = 'ret'
+        name = 'nonvoid'
         filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nonvoid', 'return'])
@@ -461,6 +475,19 @@ class TestParser(unittest.TestCase):
         @property
         def model(self):
             return self._model
+
+    def __init__(self, *args, **kwargs):
+        super(TestParser, self).__init__(*args, **kwargs)
+        # create temp folder
+        if not os.path.isdir(folderpath):
+            os.mkdir(folderpath)
+
+    def __del__(self):
+        if os.path.isdir(folderpath) and not os.listdir(folderpath):
+            try:
+                os.rmdir(folderpath)
+            except OSError:
+                pass
 
     def setUp(self):
         # save all models and remove them after the test
@@ -524,10 +551,7 @@ class TestParser(unittest.TestCase):
 
         args = self.Args(filename)
 
-        parser = Parser(args)
-
-        parser.extend_compiler()
-        parser.remove_models()
+        Parser(args)
 
 
 if __name__ == '__main__':
