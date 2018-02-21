@@ -38,6 +38,7 @@ class Model:
         # model consistency checks
         self._check_rd = False      # check if rd is defined
         self._check_rs1 = False     # check if rs1 is defined
+        self._check_op2 = False
         self._rettype = ''
 
         logger.info("Parsing model @ %s" % impl)
@@ -110,9 +111,11 @@ class Model:
             if node.spelling.startswith('Rs2'):
                 logger.info('Model is of format R-Type')
                 self._form = 'R'
+                self._check_op2 = True
             if node.spelling.startswith('imm'):
                 logger.info('Model is of format I-Type')
                 self._form = 'I'
+                self._check_op2 = True
 
     def extract_definition(self, node):
         '''
@@ -153,6 +156,9 @@ class Model:
             raise ConsistencyError(
                 self._check_rs1, 'Model definition requires parameter Rs1')
         # check if operand 2 was defined
+        if not self._check_op2:
+            raise ConsistencyError(
+                self._check_op2, 'Model definition requires parameter Op2')
 
         # check return type of function
         if not self._rettype == 'void':
