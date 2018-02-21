@@ -14,6 +14,56 @@ from modelparsing.parser import Operation
 sys.path.remove('..')
 
 
+class CCModel:
+    '''
+    Gather all information that is used to generate a model.
+    '''
+
+    def __init__(self, name, ftype, inttype, opc, funct3, funct7, faults):
+        self.name = name
+        self.ftype = ftype
+        self.inttype = inttype
+        self.opc = opc
+        self.funct3 = funct3
+        self.funct7 = funct7
+        self.faults = faults
+
+        self.rd = '' if 'nord' in faults else 'Rd_uw'
+        self.op1 = '' if 'nors1' in faults else 'Rs1_uw'
+
+        self.rettype = inttype if 'nonvoid' in faults else 'void'
+
+        if 'nodef' in faults:
+            self.dfn = ';'
+        elif 'noclose' in faults:
+            self.dfn = '{\n    // function definition\n'
+        elif 'return' in faults:
+            self.dfn = '{\n    // function definition\n' \
+                + '    return 0;\n}'
+        else:
+            self.dfn = '{\n    // function definition\n}'
+
+        # inttypes
+        if inttype == 'uint32_t':
+            opsuf = '_uw'
+        elif inttype == 'int32_t':
+            opsuf = '_sw'
+        elif inttype == 'uint64_t':
+            opsuf = '_ud'
+        elif inttype == 'int64_t':
+            opsuf = '_sd'
+        else:
+            opsuf = ''
+
+        if 'noop2' not in faults:
+            if ftype == 'R':
+                self.op2 = 'Rs2' + opsuf
+            elif ftype == 'I':
+                self.op2 = 'imm'
+        else:
+            self.op2 = ''
+
+
 class TestInstruction(unittest.TestCase):
     '''
     Tests for all functions in class Instruction
@@ -92,55 +142,6 @@ class TestModel(unittest.TestCase):
     Test that checks if model parser works correctly.
     '''
 
-    class Model:
-        '''
-        Gather all information that is used to generate a model.
-        '''
-
-        def __init__(self, name, ftype, inttype, opc, funct3, funct7, faults):
-            self.name = name
-            self.ftype = ftype
-            self.inttype = inttype
-            self.opc = opc
-            self.funct3 = funct3
-            self.funct7 = funct7
-            self.faults = faults
-
-            self.rd = '' if 'nord' in faults else 'Rd_uw'
-            self.op1 = '' if 'nors1' in faults else 'Rs1_uw'
-
-            self.rettype = inttype if 'nonvoid' in faults else 'void'
-
-            if 'nodef' in faults:
-                self.dfn = ';'
-            elif 'noclose' in faults:
-                self.dfn = '{\n    // function definition\n'
-            elif 'return' in faults:
-                self.dfn = '{\n    // function definition\n' \
-                    + '    return 0;\n}'
-            else:
-                self.dfn = '{\n    // function definition\n}'
-
-            # inttypes
-            if inttype == 'uint32_t':
-                opsuf = '_uw'
-            elif inttype == 'int32_t':
-                opsuf = '_sw'
-            elif inttype == 'uint64_t':
-                opsuf = '_ud'
-            elif inttype == 'int64_t':
-                opsuf = '_sd'
-            else:
-                opsuf = ''
-
-            if 'noop2' not in faults:
-                if ftype == 'R':
-                    self.op2 = 'Rs2' + opsuf
-                elif ftype == 'I':
-                    self.op2 = 'imm'
-            else:
-                self.op2 = ''
-
     def setUp(self):
         # save all models and remove them after the test
         self.tstmodels = []
@@ -177,13 +178,13 @@ class TestModel(unittest.TestCase):
         '''
         Create local cc Model and from that cc file.
         '''
-        self.ccmodel = self.Model(name,
-                                  self.ftype,
-                                  self.inttype,
-                                  self.opc,
-                                  self.funct3,
-                                  funct7,
-                                  faults)
+        self.ccmodel = CCModel(name,
+                               self.ftype,
+                               self.inttype,
+                               self.opc,
+                               self.funct3,
+                               funct7,
+                               faults)
 
         # generate .cc models
         modelgen = Template(filename='test_models/model-gen.mako')
@@ -439,6 +440,45 @@ class TestOperation(unittest.TestCase):
         self.assertEqual(self.op.funct7, self.funct7)
         self.assertEqual(self.op.name, self.name)
         self.assertEqual(self.op.opc, self.opc)
+
+
+class TestParser(unittest.TestCase):
+    '''
+    Tests for the Parser class.
+    More or less a complete functional test.
+    '''
+
+    def setUp(self):
+        # save all models and remove them after the test
+        self.tstmodels = []
+
+        self.ftype = 'I'
+        self.inttype = 'uint32_t'
+        self.opc = 0x0a
+        self.funct3 = 0x07
+
+    def tearDown(self):
+        # remove generated file
+        if hasattr(self, '_outcome'):  # Python 3.4+
+            # these 2 methods have no side effects
+            result = self.defaultTestResult()
+            self._feedErrorsToResult(result, self._outcome.errors)
+        else:
+            # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
+            result = getattr(self, '_outcomeForDoCleanups',
+                             self._resultForDoCleanups)
+
+        error = ''
+        if result.errors and result.errors[-1][0] is self:
+            error = result.errors[-1][1]
+
+        failure = ''
+        if result.failures and result.failures[-1][0] is self:
+            failure = result.failures[-1][1]
+
+        if not error and not failure:
+            for model in self.tstmodels:
+                os.remove(model)
 
 
 if __name__ == '__main__':
