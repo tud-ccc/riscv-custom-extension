@@ -22,6 +22,6 @@ ${model.dfn}
 		${model.inttype} ${model.op1},
 	% endif
 	% if model.op2:
-		${model.inttype} ${model.op2},
+		${model.inttype} ${model.op2}
 	% endif
 </%def>

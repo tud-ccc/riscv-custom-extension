@@ -119,6 +119,9 @@ class TestModel(unittest.TestCase):
                 self.dfn = ';'
             elif 'noclose' in faults:
                 self.dfn = '{\n    // function definition\n'
+            elif 'return' in faults:
+                self.dfn = '{\n    // function definition\n' \
+                    + '    return 0;\n}'
             else:
                 self.dfn = '{\n    // function definition\n}'
 
@@ -312,7 +315,7 @@ class TestModel(unittest.TestCase):
         name = 'wrongfunct7'
         self.ftype = 'R'
         funct7 = 0xaa
-        filename = 'test_models' + name + '.cc'
+        filename = 'test_models/' + name + '.cc'
 
         self.genModel(name, filename, funct7=funct7)
 
@@ -345,6 +348,15 @@ class TestModel(unittest.TestCase):
         filename = 'test_models/' + name + '.cc'
 
         self.genModel(name, filename, faults=['noclose'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testReturnInFctBody(self):
+        name = 'ret'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['return'])
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
