@@ -365,7 +365,7 @@ class Parser:
         # start parsing the models
         self.parse_models()
         # extend comiler with models
-        self.extend_comiler()
+        self.extend_compiler()
 
     def parse_models(self):
         '''
@@ -468,7 +468,7 @@ class Parser:
             content = ''.join(content)
             fh.write(content)
 
-    def extend_comiler(self):
+    def extend_compiler(self):
         '''
         Calls functions to extend necessary header and c files.
         After that, the toolchain will be rebuild.
