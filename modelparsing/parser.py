@@ -23,8 +23,10 @@ class Model:
 
         logger.info("Using libclang at %s" % clang.cindex.Config.library_file)
 
+        self.compile_model(impl)
+
         index = clang.cindex.Index.create()
-        tu = index.parse(impl, ['-x', 'c++', '-std=c++11'])
+        tu = index.parse(impl, ['-x', 'c++', '-c', '-std=c++11'])
 
         # information to retrieve form model
         self._dfn = ''              # definition
@@ -41,6 +43,22 @@ class Model:
 
         self.parse_model(tu.cursor)
         self.check_consistency()
+
+    def compile_model(self, file):
+        logger.info('Compile model {}'.format(file))
+        p = subprocess.Popen([r'g++',
+                              '-fsyntax-only',
+                              '-Wall',
+                              '-std=c++11',
+                              '-c',
+                              file],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        (_, ret) = p.communicate()
+
+        if ret:
+            logger.error(ret)
+            raise ConsistencyError(file, 'Compile error.')
 
     def parse_model(self, node):
         '''

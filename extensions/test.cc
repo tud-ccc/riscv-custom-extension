@@ -32,5 +32,5 @@ uint8_t funct7 = 0x00;  // funct7, 7 bits
 
 void fmod(uint32_t Rd_uw, uint32_t Rs1_uw, uint32_t Rs2_uw)
 {
-	Rd_uw = Rs1_uw % Rs2_uw;
+    Rd_uw = Rs1_uw % Rs2_uw;
 }
