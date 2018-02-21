@@ -107,7 +107,7 @@ class TestModel(unittest.TestCase):
             self.faults = faults
 
             self.rd = '' if 'nord' in faults else 'Rd_uw'
-            self.op1 = '' if 'noop1' in faults else 'Rs1_uw'
+            self.op1 = '' if 'nors1' in faults else 'Rs1_uw'
 
             self.rettype = inttype if 'nonvoid' in faults else 'void'
 
@@ -133,10 +133,11 @@ class TestModel(unittest.TestCase):
             else:
                 opsuf = ''
 
-            if ftype == 'R':
-                self.op2 = 'Rs2' + opsuf
-            elif ftype == 'I':
-                self.op2 = 'imm'
+            if 'noop2' not in faults:
+                if ftype == 'R':
+                    self.op2 = 'Rs2' + opsuf
+                elif ftype == 'I':
+                    self.op2 = 'imm'
             else:
                 self.op2 = ''
 
@@ -243,7 +244,52 @@ class TestModel(unittest.TestCase):
         name = 'nors1'
         filename = 'test_models/' + name + '.cc'
 
-        self.genModel(name, filename, faults=['noop1'])
+        self.genModel(name, filename, faults=['nors1'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoOp2Model(self):
+        name = 'noop2'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['noop2'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoRdNoRs1Model(self):
+        name = 'nordnors1'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['nord', 'nors1'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoRdNoOp2Model(self):
+        name = 'nordnoop2'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['nord', 'noop2'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoRs1NoOp2Model(self):
+        name = 'nors1noop2'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['nors1', 'noop2'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoRdNoRs1NoOp2Model(self):
+        name = 'nordnors1noop2'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['nord', 'nors1', 'noop2'])
 
         with self.assertRaises(ConsistencyError):
             Model(filename)

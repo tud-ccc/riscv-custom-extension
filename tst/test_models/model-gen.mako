@@ -15,13 +15,32 @@ ${model.rettype} ${model.name}(${opperands()})
 ${model.dfn}
 
 <%def name="opperands()">
-	% if model.rd is not '':
+	% if model.rd and model.op1 and model.op2:
 		${model.inttype} ${model.rd},
+        ${model.inttype} ${model.op1},
+        ${model.inttype} ${model.op2}
 	% endif
-	% if model.op1 is not '':
-		${model.inttype} ${model.op1},
+	% if model.rd and not model.op1 and model.op2:
+        ${model.inttype} ${model.rd},
+        ${model.inttype} ${model.op2}   
 	% endif
-	% if model.op2:
-		${model.inttype} ${model.op2}
+	% if model.rd and model.op1 and not model.op2:
+        ${model.inttype} ${model.rd},
+        ${model.inttype} ${model.op1}
 	% endif
+    % if not model.rd and model.op1 and model.op2:
+        ${model.inttype} ${model.op1},
+        ${model.inttype} ${model.op2}
+    % endif
+    % if model.rd and not model.op1 and not model.op2:
+        ${model.inttype} ${model.rd}
+    % endif
+    % if not model.rd and model.op1 and not model.op2:
+        ${model.inttype} ${model.op1}
+    % endif
+    % if not model.rd and not model.op1 and model.op2:
+        ${model.inttype} ${model.op2}
+    % endif
+    % if not model.rd and not model.op1 and not model.op2:
+    % endif
 </%def>
