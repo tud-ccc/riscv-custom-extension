@@ -11,6 +11,7 @@ from modelparsing.exceptions import ConsistencyError
 from modelparsing.parser import Instruction
 from modelparsing.parser import Model
 from modelparsing.parser import Operation
+from modelparsing.parser import Parser
 sys.path.remove('..')
 
 
@@ -448,6 +449,18 @@ class TestParser(unittest.TestCase):
     More or less a complete functional test.
     '''
 
+    class Args:
+        '''
+        Represent args, that parser needs.
+        '''
+
+        def __init__(self, model):
+            self._model = model
+
+        @property
+        def model(self):
+            return self._model
+
     def setUp(self):
         # save all models and remove them after the test
         self.tstmodels = []
@@ -479,6 +492,39 @@ class TestParser(unittest.TestCase):
         if not error and not failure:
             for model in self.tstmodels:
                 os.remove(model)
+
+    def genModel(self, name, filename, funct7=0xff, faults=[]):
+        '''
+        Create local cc Model and from that cc file.
+        '''
+        self.ccmodel = CCModel(name,
+                               self.ftype,
+                               self.inttype,
+                               self.opc,
+                               self.funct3,
+                               funct7,
+                               faults)
+
+        # generate .cc models
+        modelgen = Template(filename='test_models/model-gen.mako')
+
+        with open(filename, 'w') as fh:
+            fh.write(modelgen.render(model=self.ccmodel))
+
+        self.tstmodels.append(filename)
+
+    def testExtendHeader(self):
+        name = 'test1'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+
+        parser = Parser(args)
+
+        parser.extend_compiler()
+        parser.remove_models()
 
 
 if __name__ == '__main__':

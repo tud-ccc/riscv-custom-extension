@@ -315,6 +315,11 @@ class Extensions:
         self._ops = []
         self._insts = []
 
+        self._opc_templ = os.path.dirname(
+            os.path.realpath(__file__)) + '/opcodes-custom.mako'
+        self._rv_opc_parser = os.path.dirname(
+            os.path.realpath(__file__)) + '/../riscv-opcodes/parse-opcodes'
+
         self.models_to_ops()
         self.ops_to_insts()
 
@@ -330,7 +335,7 @@ class Extensions:
             self._ops.append(op)
 
     def ops_to_insts(self):
-        opcodes_cust = Template(filename='modelparsing/opcodes-custom.mako')
+        opcodes_cust = Template(filename=self._opc_templ)
 
         opc_cust = 'opcodes-custom'
         with open(opc_cust, 'w') as fh:
@@ -344,7 +349,7 @@ class Extensions:
         except OSError:
             pass
 
-        p = subprocess.Popen(['riscv-opcodes/parse-opcodes',
+        p = subprocess.Popen([self._rv_opc_parser,
                               '-c'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE)
@@ -400,9 +405,13 @@ class Parser:
         self._models = []
 
         # header file that needs to be edited
-        self.opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
+        self.opch = os.path.dirname(
+            os.path.realpath(__file__)) + '/../riscv-gnu-toolchain/'\
+            + 'riscv-binutils-gdb/include/opcode/riscv-opc.h'
         # c source file that needs to be edited
-        self.opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
+        self.opcc = os.path.dirname(
+            os.path.realpath(__file__)) + '/../riscv-gnu-toolchain/'\
+            + 'riscv-binutils-gdb/opcodes/riscv-opc.c'
 
         # start parsing the models
         self.parse_models()
