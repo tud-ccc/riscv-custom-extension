@@ -30,7 +30,11 @@ uint8_t opc    = 0x02;  // opc, 5 bits
 uint8_t funct3 = 0x00;  // funct3, 3 bits
 uint8_t funct7 = 0x00;  // funct7, 7 bits
 
-void fmod(uint32_t Rd_uw, uint32_t Rs1_uw, uint32_t Rs2_uw)
+void fmod(
+    uint32_t Rd_uw,
+    uint32_t Rs1_uw,
+    uint32_t Rs2_uw
+)
 {
     Rd_uw = Rs1_uw % Rs2_uw;
 }

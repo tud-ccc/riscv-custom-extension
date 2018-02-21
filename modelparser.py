@@ -10,15 +10,18 @@ from modelparsing.parser import Parser
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
-# always write everything to the rotating log files
+# # always write everything to the rotating log files
 # if not os.path.exists('logs'):
 #     os.mkdir('logs')
 # log_file_handler = logging.handlers.TimedRotatingFileHandler(
 #     'logs/args.log', when='M', interval=2)
 # log_file_handler.setFormatter(logging.Formatter(
-#     '%(asctime)s [%(levelname)s](%(name)s:%(funcName)s:%(lineno)d): %(message)s'))
+#     '%(asctime)s ' +
+#     '[%(levelname)s]' +
+#     '(%(name)s:%(funcName)s:%(lineno)d): %(message)s')
+# )
 # log_file_handler.setLevel(logging.DEBUG)
-# logger.addHandler(log_file_handler)
+# root_logger.addHandler(log_file_handler)
 
 # also log to the console at a level determined by the --verbose flag
 console_handler = logging.StreamHandler()  # sys.stderr
@@ -65,7 +68,11 @@ def main():
     set_log_level_from_verbose(args)
 
     logger.info('Start parsing models')
-    Parser(args)
+    modelparser = Parser(args)
+    # extend compiler with models
+    modelparser.extend_compiler()
+
+    # modelparser.remove_models()
 
 
 def set_log_level_from_verbose(args):

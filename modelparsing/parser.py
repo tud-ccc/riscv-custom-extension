@@ -399,10 +399,50 @@ class Parser:
         self._args = args
         self._models = []
 
+        # header file that needs to be edited
+        self.opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
+        # c source file that needs to be edited
+        self.opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
+
         # start parsing the models
         self.parse_models()
-        # extend comiler with models
-        self.extend_compiler()
+
+    def remove_models(self):
+        '''
+        Remove all custom extensions.
+        May be only used for unit tests.
+        '''
+        self._insts = Extensions(self._models).instructions
+
+        # read header file
+        with open(self.opch, 'r') as fh:
+            hcontent = fh.readlines()
+
+        # read source file
+        with open(self.opcc, 'r') as fh:
+            ccontent = fh.readlines()
+
+        for inst in self._insts:
+            if inst.match in hcontent:
+                hcontent.remove(inst.match)
+            if inst.mask in hcontent:
+                hcontent.remove(inst.mask)
+
+            dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
+                inst.name, inst.operands, inst.matchname, inst.maskname)
+
+            if dfn in ccontent:
+                ccontent.remove(dfn)
+
+        # write back modified content
+        with open(self.opch, 'w') as fh:
+            hcontent = ''.join(hcontent)
+            fh.write(hcontent)
+
+        # write back modified content
+        with open(self.opcc, 'w') as fh:
+            ccontent = ''.join(ccontent)
+            fh.write(ccontent)
 
     def parse_models(self):
         '''
@@ -412,16 +452,32 @@ class Parser:
         model = Model(self._args.model)
         self._models.append(model)
 
+    def extend_compiler(self):
+        '''
+        Calls functions to extend necessary header and c files.
+        After that, the toolchain will be rebuild.
+        Then the compiler should know the custom instructions.
+        '''
+        self._insts = Extensions(self._models).instructions
+
+        # in the meantime instructions may been deletet from the list
+        # insts = extend_header(insts)
+        self.extend_header()
+
+        # return value should be the same as the function parameter because in
+        # extend_headers all previously included instructions should have been
+        # removed.
+        # insts = extend_source(insts)
+        self.extend_source()
+
     def extend_header(self):
         '''
         Extend the header file riscv-opc.h with the generated masks and matches
         of the custom instructions.
         '''
 
-        # header file that needs to be edited
-        opch = 'riscv-gnu-toolchain/riscv-binutils-gdb/include/opcode/riscv-opc.h'
         # the mask and match defines has to be added in the header file
-        with open(opch, 'r') as fh:
+        with open(self.opch, 'r') as fh:
             content = fh.readlines()
 
         for inst in self._insts:
@@ -439,9 +495,18 @@ class Parser:
 
             # check whether a mask or a match entry exists but not the
             # corresponding other
-            if inst.mask in content or inst.match in content:
+            if inst.mask in content and inst.match not in content:
                 logger.warn(
-                    "Mask or match already existing, but the other not. " +
+                    'Opcode of instruction was changed. ' +
+                    'Assuming you know what you are doing. ' +
+                    'Overwriting old entry.')
+                # remove instruction from list to prevent generating duplicates
+                self._insts.remove(inst)
+                continue
+
+            if inst.mask not in content and inst.match in content:
+                logger.warn(
+                    "Match already existing, but not Mask. " +
                     "Skip insertion")
                 # remove instruction from list to prevent generating duplicates
                 self._insts.remove(inst)
@@ -456,7 +521,7 @@ class Parser:
             content.insert(3, inst.match)
 
         # write back modified content
-        with open(opch, 'w') as fh:
+        with open(self.opch, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
 
@@ -466,10 +531,8 @@ class Parser:
         custom instructions.
         '''
 
-        # c source file that needs to be edited
-        opcc = 'riscv-gnu-toolchain/riscv-binutils-gdb/opcodes/riscv-opc.c'
         # read source file
-        with open(opcc, 'r') as fh:
+        with open(self.opcc, 'r') as fh:
             content = fh.readlines()
 
         for inst in self._insts:
@@ -501,24 +564,6 @@ class Parser:
             content.insert(line, dfn)
 
         # write back modified content
-        with open(opcc, 'w') as fh:
+        with open(self.opcc, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
-
-    def extend_compiler(self):
-        '''
-        Calls functions to extend necessary header and c files.
-        After that, the toolchain will be rebuild.
-        Then the compiler should know the custom instructions.
-        '''
-        self._insts = Extensions(self._models).instructions
-
-        # in the meantime instructions may been deletet from the list
-        # insts = extend_header(insts)
-        self.extend_header()
-
-        # return value should be the same as the function parameter because in
-        # extend_headers all previously included instructions should have been
-        # removed.
-        # insts = extend_source(insts)
-        self.extend_source()
