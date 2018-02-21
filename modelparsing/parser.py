@@ -38,6 +38,7 @@ class Model:
         # model consistency checks
         self._check_rd = False      # check if rd is defined
         self._check_rs1 = False     # check if rs1 is defined
+        self._rettype = ''
 
         logger.info("Parsing model @ %s" % impl)
 
@@ -72,7 +73,10 @@ class Model:
         # twice
         if node.kind == clang.cindex.CursorKind.FUNCTION_DECL \
                 and self._name == '':
+            # save name
             self._name = node.spelling
+            # save rettype for consistency check
+            self._rettype = list(node.get_tokens())[0].spelling
             logger.info("Function name: {}".format(self._name))
 
         if node.kind == clang.cindex.CursorKind.COMPOUND_STMT:
@@ -139,12 +143,21 @@ class Model:
         '''
         logger.info('Check consistency of model definition')
 
+        # check function definition
+        # does rd and rs1 exist?
+        # both are required for R and I type
         if not self._check_rd:
             raise ConsistencyError(
                 self._check_rd, 'Model definition requires parameter Rd')
         if not self._check_rs1:
             raise ConsistencyError(
                 self._check_rs1, 'Model definition requires parameter Rs1')
+        # check if operand 2 was defined
+
+        # check return type of function
+        if not self._rettype == 'void':
+            raise ConsistencyError(
+                self._rettype, 'Function has to be of type void.')
 
         if self._opc not in [0x02, 0x0a, 0x16, 0x1e]:
             raise ValueError(self._opc, 'Invalid opcode.')

@@ -11,7 +11,7 @@ uint8_t opc    = ${model.opc};  // opc, 5 bits
 uint8_t funct3 = ${model.funct3};  // funct3, 3 bits
 % endif
 
-void ${model.name}(${opperands()})
+${model.rettype} ${model.name}(${opperands()})
 ${model.dfn}
 
 <%def name="opperands()">

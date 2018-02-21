@@ -109,6 +109,8 @@ class TestModel(unittest.TestCase):
             self.rd = '' if 'nord' in faults else 'Rd_uw'
             self.op1 = '' if 'noop1' in faults else 'Rs1_uw'
 
+            self.rettype = inttype if 'nonvoid' in faults else 'void'
+
             if 'nodef' in faults:
                 self.dfn = ';'
             elif 'noclose' in faults:
@@ -351,6 +353,15 @@ class TestModel(unittest.TestCase):
         filename = 'test_models/' + name + '.cc'
 
         self.genModel(name, filename, faults=['return'])
+
+        with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNonVoidFct(self):
+        name = 'ret'
+        filename = 'test_models/' + name + '.cc'
+
+        self.genModel(name, filename, faults=['nonvoid', 'return'])
 
         with self.assertRaises(ConsistencyError):
             Model(filename)
