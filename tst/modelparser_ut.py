@@ -106,14 +106,8 @@ class TestModel(unittest.TestCase):
             self.funct7 = funct7
             self.faults = faults
 
-            if 'nord' in faults:
-                self.rd = ''
-            else:
-                self.rd = 'Rd_uw'
-            if 'noop1' in faults:
-                self.op1 = ''
-            else:
-                self.op1 = 'Rs1_uw'
+            self.rd = '' if 'nord' in faults else 'Rd_uw'
+            self.op1 = '' if 'noop1' in faults else 'Rs1_uw'
 
             if 'nodef' in faults:
                 self.dfn = ';'

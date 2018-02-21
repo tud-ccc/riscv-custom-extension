@@ -412,8 +412,8 @@ class Parser:
             # added
             if inst.mask in content and inst.match in content:
                 logger.info(
-                    "Mask {!r} and match {!r} ".format(inst.mask, inst.match) +
-                    "already in riscv-opc.h. Therefore skip instertion")
+                    'Mask {!r} and match {!r} '.format(inst.mask, inst.match) +
+                    'already in riscv-opc.h. Therefore skip instertion')
                 # remove instruction from list to prevent generating duplicates
                 # insts.remove(inst)
                 continue
