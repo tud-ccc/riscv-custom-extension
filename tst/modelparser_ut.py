@@ -14,6 +14,7 @@ from modelparsing.parser import Operation
 from modelparsing.parser import Parser
 sys.path.remove('..')
 
+folderpath = 'test_models/'
 
 class CCModel:
     '''
@@ -188,7 +189,7 @@ class TestModel(unittest.TestCase):
                                faults)
 
         # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
+        modelgen = Template(filename='model-gen.mako')
 
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=self.ccmodel))
@@ -201,7 +202,7 @@ class TestModel(unittest.TestCase):
         self.ftype = 'R'
         self.opc = 0x02
         funct7 = 0x01
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, funct7)
 
@@ -218,7 +219,7 @@ class TestModel(unittest.TestCase):
     def testITypeModel(self):
         # map itype.cc
         name = 'itype'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -234,7 +235,7 @@ class TestModel(unittest.TestCase):
     def testNoRdModel(self):
         # no opcode specified
         name = 'nord'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord'])
 
@@ -244,7 +245,7 @@ class TestModel(unittest.TestCase):
     def testNoRs1Model(self):
         # no rs1 specified
         name = 'nors1'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nors1'])
 
@@ -253,7 +254,7 @@ class TestModel(unittest.TestCase):
 
     def testNoOp2Model(self):
         name = 'noop2'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['noop2'])
 
@@ -262,7 +263,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRdNoRs1Model(self):
         name = 'nordnors1'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord', 'nors1'])
 
@@ -271,7 +272,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRdNoOp2Model(self):
         name = 'nordnoop2'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord', 'noop2'])
 
@@ -280,7 +281,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRs1NoOp2Model(self):
         name = 'nors1noop2'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nors1', 'noop2'])
 
@@ -289,7 +290,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRdNoRs1NoOp2Model(self):
         name = 'nordnors1noop2'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord', 'nors1', 'noop2'])
 
@@ -301,7 +302,7 @@ class TestModel(unittest.TestCase):
         name = 'wrongopc'
         self.opc = 0x10
         self.funct3 = 0x00
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['wrongopc'])
 
@@ -313,7 +314,7 @@ class TestModel(unittest.TestCase):
         # max funct3
         name = 'rightfunct3'
         self.funct3 = 0x07
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -329,7 +330,7 @@ class TestModel(unittest.TestCase):
         # now a wrong model
         name = 'wrongfunct3'
         self.funct3 = 0xaa
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['wrongfunct3'])
 
@@ -341,7 +342,7 @@ class TestModel(unittest.TestCase):
         name = 'rightfunct7'
         self.ftype = 'R'
         funct7 = 0x7f
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, funct7=funct7)
 
@@ -359,7 +360,7 @@ class TestModel(unittest.TestCase):
         name = 'wrongfunct7'
         self.ftype = 'R'
         funct7 = 0xaa
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, funct7=funct7)
 
@@ -368,7 +369,7 @@ class TestModel(unittest.TestCase):
 
     def testExtractDefinitionModel(self):
         name = 'extract'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -380,7 +381,7 @@ class TestModel(unittest.TestCase):
 
     def testNoDefinitionModel(self):
         name = 'nodef'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nodef'])
 
@@ -389,7 +390,7 @@ class TestModel(unittest.TestCase):
 
     def testNoClosingBracket(self):
         name = 'noclose'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['noclose'])
 
@@ -398,7 +399,7 @@ class TestModel(unittest.TestCase):
 
     def testReturnInFctBody(self):
         name = 'ret'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['return'])
 
@@ -407,7 +408,7 @@ class TestModel(unittest.TestCase):
 
     def testNonVoidFct(self):
         name = 'ret'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nonvoid', 'return'])
 
@@ -470,6 +471,8 @@ class TestParser(unittest.TestCase):
         self.opc = 0x0a
         self.funct3 = 0x07
 
+        # prepare header and cc file
+
     def tearDown(self):
         # remove generated file
         if hasattr(self, '_outcome'):  # Python 3.4+
@@ -506,7 +509,7 @@ class TestParser(unittest.TestCase):
                                faults)
 
         # generate .cc models
-        modelgen = Template(filename='test_models/model-gen.mako')
+        modelgen = Template(filename='model-gen.mako')
 
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=self.ccmodel))
@@ -515,7 +518,7 @@ class TestParser(unittest.TestCase):
 
     def testExtendHeader(self):
         name = 'test1'
-        filename = 'test_models/' + name + '.cc'
+        filename = folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
