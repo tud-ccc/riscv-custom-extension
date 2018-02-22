@@ -56,13 +56,12 @@ def main():
                         help='If set, Toolchain and Gem5 will be ' +
                         'rebuild.')
     parser.add_argument('-m',
-                        '--model',
+                        '--modelpath',
                         type=str,
                         default=os.path.join(
                             os.path.dirname(__file__),
-                            'extensions',
-                            'test.cc'),
-                        help='Reference implementation')
+                            'extensions'),
+                        help='Path to Model definition folders.')
 
     args = parser.parse_args()
     set_log_level_from_verbose(args)

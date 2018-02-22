@@ -5,6 +5,7 @@ import subprocess
 
 from exceptions import ConsistencyError
 from mako.template import Template
+from stat import *
 
 
 logger = logging.getLogger(__name__)
@@ -324,7 +325,7 @@ class Extensions:
         self.ops_to_insts()
 
     def models_to_ops(self):
-        logger.info("Generate operations from models")
+        logger.info('Generate operations from models')
 
         for model in self._models:
             op = Operation(model.form,
@@ -422,6 +423,7 @@ class Parser:
         May be only used for unit tests.
         '''
 
+        logger.info('Remove custom instructions from GNU binutils files')
         # read header file
         with open(self.opch, 'r') as fh:
             hcontent = fh.readlines()
@@ -432,8 +434,10 @@ class Parser:
 
         for inst in self._insts:
             if inst.match in hcontent:
+                logger.info('Remove {} from {}'.format(inst.match, self.opch))
                 hcontent.remove(inst.match)
             if inst.mask in hcontent:
+                logger.info('Remove {} from {}'.format(inst.match, self.opcc))
                 hcontent.remove(inst.mask)
 
             dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
@@ -457,11 +461,30 @@ class Parser:
         Parse the c++ reference implementation
         of the custom instruction.
         '''
-        # TODO: traverse over dir
-        model = Model(self._args.model)
-        self._models.append(model)
+
+        self.treewalk(self._args.modelpath)
 
         self._insts = Extensions(self._models).instructions
+
+    def treewalk(self, top):
+        logger.info('Search for models in {}'.format(top))
+        for file in os.listdir(top):
+            pathname = os.path.join(top, file)
+            mode = os.stat(pathname)[ST_MODE]
+
+            if S_ISDIR(mode):
+                # directory
+                self.treewalk(pathname)
+            elif S_ISREG(mode):
+                # file
+                if pathname.endswith('.cc'):
+                    logger.info(
+                        'Found model definition in file {}'.format(pathname))
+                    model = Model(pathname)
+                    self._models.append(model)
+            else:
+                # unknown file type
+                logger.info('Unknown file type, skip')
 
     def extend_compiler(self):
         '''
@@ -516,8 +539,8 @@ class Parser:
 
             if inst.mask not in content and inst.match in content:
                 logger.warn(
-                    "Match already existing, but not Mask. " +
-                    "Skip insertion")
+                    'Match already existing, but not Mask. ' +
+                    'Skip insertion')
                 # remove instruction from list to prevent generating duplicates
                 self._insts.remove(inst)
                 continue
@@ -525,9 +548,9 @@ class Parser:
             # first line number, where the new opcode can be inserted is 3
             # insert every entry at line number 3 --> push back the remaining
             # content
-            logger.info("Adding mask %s" % inst.mask)
+            logger.info('Adding mask %s' % inst.mask)
             content.insert(3, inst.mask)
-            logger.info("Adding match %s" % inst.match)
+            logger.info('Adding match %s' % inst.match)
             content.insert(3, inst.match)
 
         # write back modified content
