@@ -638,10 +638,44 @@ class TestParser(unittest.TestCase):
             self.assertTrue(inst.match in hcontent)
             self.assertTrue(inst.mask in hcontent)
 
+    def testExtendHeaderSameTwice(self):
+        # extend the header two times with the same function
+        # should occure only once in header
+        name = 'sameFctTwice'
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename)
+        args = self.Args(filename)
+
+        parser1 = Parser(args)
+        parser1.opch = self.opcheader
+        parser1.extend_header()
+
+        parser2 = Parser(args)
+        parser2.opch = self.opcheader
+        parser2.extend_header()
+
+        with open(self.opcheader, 'r') as fh:
+            hcontent = fh.readlines()
+
+        # only added once
+        # therefore header file should have 5 entries
+        self.assertEqual(len(hcontent), 5)
+        self.assertEqual(hcontent[3], parser1.instructions[0].match)
+        self.assertEqual(hcontent[3], parser1.instructions[-1].match)
+        self.assertEqual(hcontent[3], parser2.instructions[0].match)
+        self.assertEqual(hcontent[3], parser2.instructions[-1].match)
+        self.assertEqual(hcontent[4], parser1.instructions[0].mask)
+        self.assertEqual(hcontent[4], parser1.instructions[-1].mask)
+        self.assertEqual(hcontent[4], parser2.instructions[0].mask)
+        self.assertEqual(hcontent[4], parser2.instructions[-1].mask)
+
     def testExtendHeaderSameName(self):
         # extend the header file with the same name but different opcode
+        # the last one should be taken
+        # the other ones deleted
         name = 'sameFctName'
-        filename = self.folderpath + name + '.cc'
+        filename = self.folderpath + name + '1.cc'
 
         self.genModel(name, filename)
 
@@ -653,19 +687,7 @@ class TestParser(unittest.TestCase):
 
         inst1 = parser.instructions[-1]
 
-        name = 'sameFctName1'
-        filename = self.folderpath + name + '.cc'
-        self.opc = 0x16
-        self.genModel(name, filename)
-
-        args = self.Args(filename)
-        parser2 = Parser(args)
-        parser2.opch = self.opcheader
-        parser2.extend_header()
-
-        inst2 = parser2.instructions[-1]
-
-        filename = self.folderpath + name + '2.cc'
+        filename = self.folderpath + name + '3.cc'
         self.opc = 0x0a
         self.funct3 = 0x05
         self.ftype = 'R'
@@ -679,6 +701,18 @@ class TestParser(unittest.TestCase):
 
         inst3 = parser3.instructions[-1]
 
+        filename = self.folderpath + name + '2.cc'
+        self.opc = 0x0a
+        self.ftype = 'I'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser2 = Parser(args)
+        parser2.opch = self.opcheader
+        parser2.extend_header()
+
+        inst2 = parser2.instructions[-1]
+
         with open(self.opcheader, 'r') as fh:
             hcontent = fh.readlines()
 
@@ -686,9 +720,6 @@ class TestParser(unittest.TestCase):
         self.assertTrue(inst1.match in hcontent)
         self.assertTrue(inst1.mask in hcontent)
         # match is the same
-        self.assertEqual(inst1.match, inst2.match)
-        self.assertEqual(inst1.match, inst3.match)
-        self.assertEqual(inst2.match, inst3.match)
         self.assertFalse(inst2.match in hcontent)
         self.assertFalse(inst2.mask in hcontent)
         self.assertFalse(inst3.match in hcontent)

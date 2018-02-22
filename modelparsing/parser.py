@@ -531,8 +531,6 @@ class Parser:
                     'already in riscv-opc.h. Therefore skip instertion')
                 # remove instruction from list to prevent generating duplicates
                 # insts.remove(inst)
-                content.insert(3, '// ' + inst.mask)
-                content.insert(3, '// ' + inst.match)
                 continue
 
             # check whether a mask or a match entry exists but not the
