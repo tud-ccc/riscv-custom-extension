@@ -469,12 +469,12 @@ class TestParser(unittest.TestCase):
         Represent args, that parser needs.
         '''
 
-        def __init__(self, model):
-            self._model = model
+        def __init__(self, modelpath):
+            self._modelpath = modelpath
 
         @property
-        def model(self):
-            return self._model
+        def modelpath(self):
+            return self._modelpath
 
     def __init__(self, *args, **kwargs):
         super(TestParser, self).__init__(*args, **kwargs)

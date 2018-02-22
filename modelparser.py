@@ -61,7 +61,8 @@ def main():
                         default=os.path.join(
                             os.path.dirname(__file__),
                             'extensions'),
-                        help='Path to Model definition folders.')
+                        help='Path to model definition. ' +
+                        'Can be a folder or a single file.')
 
     args = parser.parse_args()
     set_log_level_from_verbose(args)

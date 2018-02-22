@@ -462,7 +462,14 @@ class Parser:
         of the custom instruction.
         '''
 
-        self.treewalk(self._args.modelpath)
+        logger.info('Determine if modelpath is a folder or a single file')
+        if os.path.isdir(self._args.modelpath):
+            logger.info('Traverse over directory')
+            self.treewalk(self._args.modelpath)
+        else:
+            logger.info('Single file, start parsing')
+            model = Model(self._args.modelpath)
+            self._models.append(model)
 
         self._insts = Extensions(self._models).instructions
 
