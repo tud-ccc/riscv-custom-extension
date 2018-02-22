@@ -130,7 +130,7 @@ class Model:
 
         logger.info("Definintion in {} @ line {}".format(
             filename, node.location.line))
-        logger.info('Definition:\n%s' % self._dfn)
+        logger.debug('Definition:\n%s' % self._dfn)
 
     def extract_value(self, node):
         '''
@@ -265,7 +265,6 @@ class Instruction:
         self._matchname = match.split()[-2]
         # the match value
         self._matchvalue = match.split()[-1]
-
 
         # set right operands that are used in binutils' opc parsing
         # d -> Rd
@@ -523,10 +522,21 @@ class Parser:
         of the custom instructions.
         '''
 
-        # the mask and match defines has to be added in the header file
+        # we need the content of the header file
         with open(self.opch, 'r') as fh:
             content = fh.readlines()
 
+        # if not existing
+        # copy the old header file
+        # basically generate new file with old content
+        opchold = self.opch + '_old'
+        if not os.path.exists(opchold):
+            logger.info('Copy original {}'.format(self.opch))
+            with open(opchold, 'w') as fh:
+                data = ''.join(content)
+                fh.write(data)
+
+        # the mask and match defines has to be added in the header file
         for inst in self._insts:
             # check if entry exists
             # skip this instruction if so
@@ -581,6 +591,16 @@ class Parser:
         # read source file
         with open(self.opcc, 'r') as fh:
             content = fh.readlines()
+
+        # if not existing
+        # copy the old source file
+        # basically generate new file with old content
+        opccold = self.opcc + '_old'
+        if not os.path.exists(opccold):
+            logger.info('Copy original {}'.format(self.opcc))
+            with open(opccold, 'w') as fh:
+                data = ''.join(content)
+                fh.write(data)
 
         for inst in self._insts:
             # check if entry exists
