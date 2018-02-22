@@ -252,13 +252,20 @@ class Instruction:
     Contains the name, the mask and the match.
     '''
 
-    def __init__(self, form, mask, maskname, match, matchname, name):
+    def __init__(self, form, mask, match, name):
         self._form = form  # format
         self._mask = mask  # the whole mask string
-        self._maskname = maskname  # the mask name
         self._match = match  # the whole match string
-        self._matchname = matchname  # the match name
         self._name = name  # the name that shall occure in the assembler
+        # the mask name
+        self._maskname = mask.split()[-2]
+        # the mask value
+        self._maskvalue = mask.split()[-1]
+        # the match name
+        self._matchname = match.split()[-2]
+        # the match value
+        self._matchvalue = match.split()[-1]
+
 
         # set right operands that are used in binutils' opc parsing
         # d -> Rd
@@ -289,12 +296,20 @@ class Instruction:
         return self._maskname
 
     @property
+    def maskvalue(self):
+        return self._maskvalue
+
+    @property
     def match(self):
         return self._match
 
     @property
     def matchname(self):
         return self._matchname
+
+    @property
+    def matchvalue(self):
+        return self._matchvalue
 
     @property
     def name(self):
@@ -361,14 +376,8 @@ class Extensions:
 
         masks = [
             entry for entry in lines if entry.startswith('#define MASK')]
-        masknames = [
-            entry for entry in masks for entry in entry.split()
-            if entry.startswith('MASK')]
         matches = [
             entry for entry in lines if entry.startswith('#define MATCH')]
-        matchnames = [
-            entry for entry in matches for entry in entry.split()
-            if entry.startswith('MATCH')]
 
         assert len(masks) == len(
             matches), 'Length of mask and match arrays differ'
@@ -376,9 +385,7 @@ class Extensions:
         for i in range(0, len(self._ops)):
             inst = Instruction(self._models[i].form,
                                masks[i],
-                               masknames[i],
                                matches[i],
-                               matchnames[i],
                                self._models[i].name)
             self._insts.append(inst)
 

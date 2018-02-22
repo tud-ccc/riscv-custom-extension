@@ -76,10 +76,12 @@ class TestInstruction(unittest.TestCase):
         # set up three different instructions to test all variants of operants
         # R-Type
         self.formr = 'R'
-        self.mask = 'MASK'
-        self.maskname = 'MASKNAME'
-        self.match = 'MATCH'
-        self.matchname = 'MATCHNAME'
+        self.mask = 'MASK_NAME 0x01'
+        self.maskname = 'MASK_NAME'
+        self.maskvalue = '0x01'
+        self.match = 'MATCH_NAME 0x02'
+        self.matchname = 'MATCH_NAME'
+        self.matchvalue = '0x02'
         self.name0 = 'test0'
         # I-Type
         self.formi = 'I'
@@ -91,21 +93,15 @@ class TestInstruction(unittest.TestCase):
         # create Instructions
         self.inst0 = Instruction(self.formr,
                                  self.mask,
-                                 self.maskname,
                                  self.match,
-                                 self.matchname,
                                  self.name0)
         self.inst1 = Instruction(self.formi,
                                  self.mask,
-                                 self.maskname,
                                  self.match,
-                                 self.matchname,
                                  self.name1)
         self.inst2 = Instruction(self.formx,
                                  self.mask,
-                                 self.maskname,
                                  self.match,
-                                 self.matchname,
                                  self.name2)
 
         # create expected operand strings
@@ -117,8 +113,10 @@ class TestInstruction(unittest.TestCase):
         self.assertEqual(self.inst0.form, self.formr)
         self.assertEqual(self.inst0.mask, self.mask)
         self.assertEqual(self.inst0.maskname, self.maskname)
+        self.assertEqual(self.inst0.maskvalue, self.maskvalue)
         self.assertEqual(self.inst0.match, self.match)
         self.assertEqual(self.inst0.matchname, self.matchname)
+        self.assertEqual(self.inst0.matchvalue, self.matchvalue)
         self.assertEqual(self.inst0.name, self.name0)
         self.assertEqual(self.inst0.operands, self.opsr)
 
