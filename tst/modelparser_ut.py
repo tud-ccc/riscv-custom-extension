@@ -714,6 +714,8 @@ class TestParser(unittest.TestCase):
         with open(self.opcheader, 'r') as fh:
             hcontent = fh.readlines()
 
+        # only one function should be in
+        self.assertEqual(len(hcontent), 5)
         # check if first function is in but not second one
         self.assertTrue(inst1.match in hcontent)
         self.assertTrue(inst1.mask in hcontent)
@@ -722,6 +724,39 @@ class TestParser(unittest.TestCase):
         self.assertFalse(inst2.mask in hcontent)
         self.assertFalse(inst3.match in hcontent)
         self.assertFalse(inst3.mask in hcontent)
+
+    def testExtendHeaderSameMaskDifferentMatch(self):
+        # try to generate two functions with different match but same mask
+        # both should appear in header
+        # how do we do that? try different func3
+        name = 'func1'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        name = 'func2'
+        filename = self.folderpath + name + '.cc'
+        self.funct3 += 1
+        self.genModel(name, filename)
+
+        args = self.Args(self.folderpath)
+        parser = Parser(args)
+        parser.opch = self.opcheader
+        parser.extend_header()
+
+        with open(self.opcheader, 'r') as fh:
+            hcontent = fh.readlines()
+
+        self.assertTrue(parser.instructions[0].match in hcontent)
+        self.assertTrue(parser.instructions[0].mask in hcontent)
+        self.assertTrue(parser.instructions[-1].match in hcontent)
+        self.assertTrue(parser.instructions[-1].mask in hcontent)
+        self.assertTrue(parser.instructions[1].match in hcontent)
+        self.assertTrue(parser.instructions[1].mask in hcontent)
+        self.assertTrue(parser.instructions[-2].match in hcontent)
+        self.assertTrue(parser.instructions[-2].mask in hcontent)
+
+        self.assertEqual(len(parser.instructions), 2)
+        self.assertEqual(len(hcontent), 7)
 
 
 if __name__ == '__main__':
