@@ -5,13 +5,13 @@ import unittest
 
 from scripts import model_gen
 from scripts.ccmodel import CCModel
-from tst import folderpath
 from mako.template import Template
 
-sys.path.append('../..')
+sys.path.append('..')
 from modelparsing.exceptions import ConsistencyError
 from modelparsing.parser import Parser
-sys.path.remove('../..')
+from tst import folderpath
+sys.path.remove('..')
 
 
 class TestParser(unittest.TestCase):
@@ -44,11 +44,6 @@ class TestParser(unittest.TestCase):
             os.mkdir(self.folderpath)
 
     def __del__(self):
-        if os.path.isdir(self.folderpath) and not os.listdir(self.folderpath):
-            try:
-                os.rmdir(self.folderpath)
-            except OSError:
-                pass
         if os.path.isdir(folderpath) and not os.listdir(folderpath):
             try:
                 os.rmdir(folderpath)
@@ -94,11 +89,6 @@ class TestParser(unittest.TestCase):
 
         if not error and not failure:
             shutil.rmtree(self.folderpath)
-            for file in os.listdir(self.folderpath):
-                try:
-                    os.remove(file)
-                except OSError:
-                    pass
 
     def genModel(self, name, filename, funct7=0xff, faults=[]):
         '''
@@ -244,7 +234,7 @@ class TestParser(unittest.TestCase):
         parser.opch = self.opcheader
         parser.extend_header()
 
-        #inst1 = parser.instructions[-1]
+        inst1 = parser.instructions[-1]
 
         filename = self.folderpath + name + '3.cc'
         self.opc = 0x0a
@@ -258,7 +248,7 @@ class TestParser(unittest.TestCase):
         parser3.opch = self.opcheader
         parser3.extend_header()
 
-        #inst3 = parser3.instructions[-1]
+        inst3 = parser3.instructions[-1]
 
         filename = self.folderpath + name + '2.cc'
         self.opc = 0x0a
@@ -270,10 +260,21 @@ class TestParser(unittest.TestCase):
         parser2.opch = self.opcheader
         parser2.extend_header()
 
-        #inst2 = parser2.instructions[-1]
+        inst2 = parser2.instructions[-1]
 
-        # with open(self.opcheader, 'r') as fh:
-        #     hcontent = fh.readlines()
+        with open(self.opcheader, 'r') as fh:
+            hcontent = fh.readlines()
+
+        # only one function should be in
+        self.assertEqual(len(hcontent), 5)
+        # check if first function is in but not second one
+        self.assertTrue(inst1.match in hcontent)
+        self.assertTrue(inst1.mask in hcontent)
+        # match is the same
+        self.assertFalse(inst2.match in hcontent)
+        self.assertFalse(inst2.mask in hcontent)
+        self.assertFalse(inst3.match in hcontent)
+        self.assertFalse(inst3.mask in hcontent)
 
     def testExtendHeaderSameMaskDifferentMatch(self):
         # try to generate two functions with different match but same mask

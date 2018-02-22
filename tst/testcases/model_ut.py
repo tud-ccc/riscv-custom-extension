@@ -1,16 +1,17 @@
 import os
+import shutil
 import sys
 import unittest
 
 from scripts import model_gen
 from scripts.ccmodel import CCModel
-from tst import folderpath
 from mako.template import Template
 
-sys.path.append('../..')
+sys.path.append('..')
 from modelparsing.exceptions import ConsistencyError
 from modelparsing.parser import Model
-sys.path.remove('../..')
+from tst import folderpath
+sys.path.remove('..')
 
 
 class TestModel(unittest.TestCase):
@@ -30,11 +31,6 @@ class TestModel(unittest.TestCase):
             os.mkdir(self.folderpath)
 
     def __del__(self):
-        if os.path.isdir(self.folderpath) and not os.listdir(self.folderpath):
-            try:
-                os.rmdir(self.folderpath)
-            except OSError:
-                pass
         if os.path.isdir(folderpath) and not os.listdir(folderpath):
             try:
                 os.rmdir(folderpath)
@@ -68,11 +64,7 @@ class TestModel(unittest.TestCase):
             failure = result.failures[-1][1]
 
         if not error and not failure:
-            for file in os.listdir(self.folderpath):
-                try:
-                    os.remove(file)
-                except OSError:
-                    pass
+            shutil.rmtree(self.folderpath)
 
     def genModel(self, name, filename, funct7=0xff, faults=[]):
         '''

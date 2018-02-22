@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 
-import instruction_ut
-import model_ut
-import operation_ut
-import parser_ut
+from testcases import instruction_ut
+from testcases import model_ut
+from testcases import operation_ut
+from testcases import parser_ut
 
 import unittest
 
