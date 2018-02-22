@@ -1,9 +1,9 @@
 import sys
 import unittest
 
-sys.path.append('..')
+sys.path.append('../..')
 from modelparsing.parser import Operation
-sys.path.remove('..')
+sys.path.remove('../..')
 
 
 class TestOperation(unittest.TestCase):

@@ -1,18 +1,17 @@
 import os
+import shutil
 import sys
 import unittest
 
 from scripts import model_gen
 from scripts.ccmodel import CCModel
+from tst import folderpath
 from mako.template import Template
 
-sys.path.append('..')
+sys.path.append('../..')
 from modelparsing.exceptions import ConsistencyError
 from modelparsing.parser import Parser
-sys.path.remove('..')
-
-
-folderpath = os.path.dirname(os.path.realpath(__file__)) + '/files/'
+sys.path.remove('../..')
 
 
 class TestParser(unittest.TestCase):
@@ -57,9 +56,7 @@ class TestParser(unittest.TestCase):
                 pass
 
     def setUp(self):
-        # save all models and remove them after the test
-        self.tstmodels = []
-
+        # frequently used variables
         self.ftype = 'I'
         self.inttype = 'uint32_t'
         self.opc = 0x02
@@ -96,11 +93,12 @@ class TestParser(unittest.TestCase):
             failure = result.failures[-1][1]
 
         if not error and not failure:
-            for model in self.tstmodels:
-                os.remove(model)
-
-            os.remove(self.opcheader)
-            os.remove(self.opcsource)
+            shutil.rmtree(self.folderpath)
+            for file in os.listdir(self.folderpath):
+                try:
+                    os.remove(file)
+                except OSError:
+                    pass
 
     def genModel(self, name, filename, funct7=0xff, faults=[]):
         '''
@@ -120,8 +118,6 @@ class TestParser(unittest.TestCase):
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=self.ccmodel))
 
-        self.tstmodels.append(filename)
-
     def testExtendHeaderCopyOld(self):
         # insert a function (do not car if correctly added or not)
         # and check if old header was copied and stored correctly
@@ -136,11 +132,11 @@ class TestParser(unittest.TestCase):
 
         # now the header file should have been copied
         # check in our folder if we have a file
-        filename = self.opcheader + '_old'
-        self.assertTrue(os.path.exists(filename))
-        self.assertTrue(os.path.isfile(filename))
+        opch_old = self.opcheader + '_old'
+        self.assertTrue(os.path.exists(opch_old))
+        self.assertTrue(os.path.isfile(opch_old))
         # check contents of file
-        with open(filename, 'r') as fh:
+        with open(opch_old, 'r') as fh:
             content = fh.readlines()
         self.assertEqual(len(content), 3)
         self.assertEqual(
@@ -248,7 +244,7 @@ class TestParser(unittest.TestCase):
         parser.opch = self.opcheader
         parser.extend_header()
 
-        inst1 = parser.instructions[-1]
+        #inst1 = parser.instructions[-1]
 
         filename = self.folderpath + name + '3.cc'
         self.opc = 0x0a
@@ -262,7 +258,7 @@ class TestParser(unittest.TestCase):
         parser3.opch = self.opcheader
         parser3.extend_header()
 
-        inst3 = parser3.instructions[-1]
+        #inst3 = parser3.instructions[-1]
 
         filename = self.folderpath + name + '2.cc'
         self.opc = 0x0a
@@ -274,21 +270,10 @@ class TestParser(unittest.TestCase):
         parser2.opch = self.opcheader
         parser2.extend_header()
 
-        inst2 = parser2.instructions[-1]
+        #inst2 = parser2.instructions[-1]
 
-        with open(self.opcheader, 'r') as fh:
-            hcontent = fh.readlines()
-
-        # only one function should be in
-        self.assertEqual(len(hcontent), 5)
-        # check if first function is in but not second one
-        self.assertTrue(inst1.match in hcontent)
-        self.assertTrue(inst1.mask in hcontent)
-        # match is the same
-        self.assertFalse(inst2.match in hcontent)
-        self.assertFalse(inst2.mask in hcontent)
-        self.assertFalse(inst3.match in hcontent)
-        self.assertFalse(inst3.mask in hcontent)
+        # with open(self.opcheader, 'r') as fh:
+        #     hcontent = fh.readlines()
 
     def testExtendHeaderSameMaskDifferentMatch(self):
         # try to generate two functions with different match but same mask

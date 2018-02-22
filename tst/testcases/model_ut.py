@@ -4,15 +4,13 @@ import unittest
 
 from scripts import model_gen
 from scripts.ccmodel import CCModel
+from tst import folderpath
 from mako.template import Template
 
-sys.path.append('..')
+sys.path.append('../..')
 from modelparsing.exceptions import ConsistencyError
 from modelparsing.parser import Model
-sys.path.remove('..')
-
-
-folderpath = os.path.dirname(os.path.realpath(__file__)) + '/files/'
+sys.path.remove('../..')
 
 
 class TestModel(unittest.TestCase):
@@ -44,9 +42,7 @@ class TestModel(unittest.TestCase):
                 pass
 
     def setUp(self):
-        # save all models and remove them after the test
-        self.tstmodels = []
-
+        # frequently used variables
         self.ftype = 'I'
         self.inttype = 'uint32_t'
         self.opc = 0x0a
@@ -72,8 +68,11 @@ class TestModel(unittest.TestCase):
             failure = result.failures[-1][1]
 
         if not error and not failure:
-            for model in self.tstmodels:
-                os.remove(model)
+            for file in os.listdir(self.folderpath):
+                try:
+                    os.remove(file)
+                except OSError:
+                    pass
 
     def genModel(self, name, filename, funct7=0xff, faults=[]):
         '''
@@ -92,8 +91,6 @@ class TestModel(unittest.TestCase):
 
         with open(filename, 'w') as fh:
             fh.write(modelgen.render(model=self.ccmodel))
-
-        self.tstmodels.append(filename)
 
     def testRTypeModel(self):
         # map rtype.cc -- should be correct
