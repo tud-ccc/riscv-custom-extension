@@ -14,7 +14,7 @@ from modelparsing.parser import Operation
 from modelparsing.parser import Parser
 sys.path.remove('..')
 
-folderpath = os.path.dirname(os.path.realpath(__file__)) + '/tmpfiles/'
+folderpath = os.path.dirname(os.path.realpath(__file__)) + '/files/'
 
 
 class CCModel:
@@ -150,8 +150,18 @@ class TestModel(unittest.TestCase):
         # create temp folder
         if not os.path.isdir(folderpath):
             os.mkdir(folderpath)
+            # test specific folder in temp folder
+        test = self._testMethodName + '/'
+        self.folderpath = os.path.join(folderpath, test)
+        if not os.path.isdir(self.folderpath):
+            os.mkdir(self.folderpath)
 
     def __del__(self):
+        if os.path.isdir(self.folderpath) and not os.listdir(self.folderpath):
+            try:
+                os.rmdir(self.folderpath)
+            except OSError:
+                pass
         if os.path.isdir(folderpath) and not os.listdir(folderpath):
             try:
                 os.rmdir(folderpath)
@@ -216,7 +226,7 @@ class TestModel(unittest.TestCase):
         self.ftype = 'R'
         self.opc = 0x02
         funct7 = 0x01
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, funct7)
 
@@ -233,7 +243,7 @@ class TestModel(unittest.TestCase):
     def testITypeModel(self):
         # map itype.cc
         name = 'itype'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -249,7 +259,7 @@ class TestModel(unittest.TestCase):
     def testNoRdModel(self):
         # no opcode specified
         name = 'nord'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord'])
 
@@ -259,7 +269,7 @@ class TestModel(unittest.TestCase):
     def testNoRs1Model(self):
         # no rs1 specified
         name = 'nors1'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nors1'])
 
@@ -268,7 +278,7 @@ class TestModel(unittest.TestCase):
 
     def testNoOp2Model(self):
         name = 'noop2'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['noop2'])
 
@@ -277,7 +287,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRdNoRs1Model(self):
         name = 'nordnors1'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord', 'nors1'])
 
@@ -286,7 +296,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRdNoOp2Model(self):
         name = 'nordnoop2'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord', 'noop2'])
 
@@ -295,7 +305,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRs1NoOp2Model(self):
         name = 'nors1noop2'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nors1', 'noop2'])
 
@@ -304,7 +314,7 @@ class TestModel(unittest.TestCase):
 
     def testNoRdNoRs1NoOp2Model(self):
         name = 'nordnors1noop2'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nord', 'nors1', 'noop2'])
 
@@ -316,7 +326,7 @@ class TestModel(unittest.TestCase):
         name = 'wrongopc'
         self.opc = 0x10
         self.funct3 = 0x00
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['wrongopc'])
 
@@ -328,7 +338,7 @@ class TestModel(unittest.TestCase):
         # max funct3
         name = 'rightfunct3'
         self.funct3 = 0x07
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -344,7 +354,7 @@ class TestModel(unittest.TestCase):
         # now a wrong model
         name = 'wrongfunct3'
         self.funct3 = 0xaa
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['wrongfunct3'])
 
@@ -356,7 +366,7 @@ class TestModel(unittest.TestCase):
         name = 'rightfunct7'
         self.ftype = 'R'
         funct7 = 0x7f
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, funct7=funct7)
 
@@ -374,7 +384,7 @@ class TestModel(unittest.TestCase):
         name = 'wrongfunct7'
         self.ftype = 'R'
         funct7 = 0xaa
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, funct7=funct7)
 
@@ -383,7 +393,7 @@ class TestModel(unittest.TestCase):
 
     def testExtractDefinitionModel(self):
         name = 'extract'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -395,7 +405,7 @@ class TestModel(unittest.TestCase):
 
     def testNoDefinitionModel(self):
         name = 'nodef'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nodef'])
 
@@ -404,7 +414,7 @@ class TestModel(unittest.TestCase):
 
     def testNoClosingBracket(self):
         name = 'noclose'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['noclose'])
 
@@ -413,7 +423,7 @@ class TestModel(unittest.TestCase):
 
     def testReturnInFctBody(self):
         name = 'retfct'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['return'])
 
@@ -422,7 +432,7 @@ class TestModel(unittest.TestCase):
 
     def testNonVoidFct(self):
         name = 'nonvoid'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename, faults=['nonvoid', 'return'])
 
@@ -481,8 +491,18 @@ class TestParser(unittest.TestCase):
         # create temp folder
         if not os.path.isdir(folderpath):
             os.mkdir(folderpath)
+        # test specific folder in temp folder
+        test = self._testMethodName + '/'
+        self.folderpath = os.path.join(folderpath, test)
+        if not os.path.isdir(self.folderpath):
+            os.mkdir(self.folderpath)
 
     def __del__(self):
+        if os.path.isdir(self.folderpath) and not os.listdir(self.folderpath):
+            try:
+                os.rmdir(self.folderpath)
+            except OSError:
+                pass
         if os.path.isdir(folderpath) and not os.listdir(folderpath):
             try:
                 os.rmdir(folderpath)
@@ -495,17 +515,17 @@ class TestParser(unittest.TestCase):
 
         self.ftype = 'I'
         self.inttype = 'uint32_t'
-        self.opc = 0x0a
-        self.funct3 = 0x07
+        self.opc = 0x02
+        self.funct3 = 0x00
 
         # prepare header and cc file
-        self.opcheader = folderpath + 'opcheader.h'
+        self.opcheader = self.folderpath + 'opcheader.h'
         with open(self.opcheader, 'w') as fh:
             fh.write(
                 '/* Automatically generated by parse-opcodes.  */\n' +
                 '#ifndef RISCV_ENCODING_H\n' +
                 '#define RISCV_ENCODING_H\n')
-        self.opcsource = folderpath + 'opcsource.c'
+        self.opcsource = self.folderpath + 'opcsource.c'
         with open(self.opcsource, 'w') as fh:
             fh.write('')
 
@@ -556,8 +576,9 @@ class TestParser(unittest.TestCase):
         self.tstmodels.append(filename)
 
     def testExtendHeaderSingle(self):
+        # extend the header with a single model
         name = 'singleHeader'
-        filename = folderpath + name + '.cc'
+        filename = self.folderpath + name + '.cc'
 
         self.genModel(name, filename)
 
@@ -576,7 +597,102 @@ class TestParser(unittest.TestCase):
         self.assertEqual(hcontent[4], parser.instructions[0].mask)
 
     def testExtendHeaderMultiple(self):
-        pass
+        # extend the header with multiple models
+        name = 'testHeader0'
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename)
+
+        name = 'testHeader1'
+        self.funct3 = 0x01
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename)
+
+        name = 'testHeader2'
+        self.opc = 0x0a
+        self.funct3 = 0x00
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename)
+
+        name = 'testHeader3'
+        self.funct3 = 0x01
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename)
+
+        args = self.Args(self.folderpath)
+
+        parser = Parser(args)
+        parser.opch = self.opcheader
+
+        parser.extend_header()
+
+        with open(self.opcheader, 'r') as fh:
+            hcontent = fh.readlines()
+
+        # basically check if all masks and matches where added
+        # maybe extend the test a little? don't know
+        for inst in parser.instructions:
+            self.assertTrue(inst.match in hcontent)
+            self.assertTrue(inst.mask in hcontent)
+
+    def testExtendHeaderSameName(self):
+        # extend the header file with the same name but different opcode
+        name = 'sameFctName'
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        # add first function
+        parser = Parser(args)
+        parser.opch = self.opcheader
+        parser.extend_header()
+
+        inst1 = parser.instructions[-1]
+
+        name = 'sameFctName1'
+        filename = self.folderpath + name + '.cc'
+        self.opc = 0x16
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser2 = Parser(args)
+        parser2.opch = self.opcheader
+        parser2.extend_header()
+
+        inst2 = parser2.instructions[-1]
+
+        filename = self.folderpath + name + '2.cc'
+        self.opc = 0x0a
+        self.funct3 = 0x05
+        self.ftype = 'R'
+        funct7 = 0x00
+        self.genModel(name, filename, funct7=funct7)
+
+        args = self.Args(filename)
+        parser3 = Parser(args)
+        parser3.opch = self.opcheader
+        parser3.extend_header()
+
+        inst3 = parser3.instructions[-1]
+
+        with open(self.opcheader, 'r') as fh:
+            hcontent = fh.readlines()
+
+        # check if first function is in but not second one
+        self.assertTrue(inst1.match in hcontent)
+        self.assertTrue(inst1.mask in hcontent)
+        # match is the same
+        self.assertEqual(inst1.match, inst2.match)
+        self.assertEqual(inst1.match, inst3.match)
+        self.assertEqual(inst2.match, inst3.match)
+        self.assertFalse(inst2.match in hcontent)
+        self.assertFalse(inst2.mask in hcontent)
+        self.assertFalse(inst3.match in hcontent)
+        self.assertFalse(inst3.mask in hcontent)
 
 
 if __name__ == '__main__':
