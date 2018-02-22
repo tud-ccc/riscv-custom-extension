@@ -577,3 +577,15 @@ class Parser:
         with open(self.opcc, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
+
+    @property
+    def args(self):
+        return self._args
+
+    @property
+    def models(self):
+        return self._models
+
+    @property
+    def instructions(self):
+        return self._insts

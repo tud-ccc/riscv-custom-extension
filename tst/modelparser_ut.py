@@ -532,8 +532,8 @@ class TestParser(unittest.TestCase):
             for model in self.tstmodels:
                 os.remove(model)
 
-        # os.remove(self.opcheader)
-        # os.remove(self.opcsource)
+            os.remove(self.opcheader)
+            os.remove(self.opcsource)
 
     def genModel(self, name, filename, funct7=0xff, faults=[]):
         '''
@@ -555,8 +555,8 @@ class TestParser(unittest.TestCase):
 
         self.tstmodels.append(filename)
 
-    def testExtendHeader(self):
-        name = 'test1'
+    def testExtendHeaderSingle(self):
+        name = 'singleHeader'
         filename = folderpath + name + '.cc'
 
         self.genModel(name, filename)
@@ -567,6 +567,16 @@ class TestParser(unittest.TestCase):
         parser.opch = self.opcheader
 
         parser.extend_header()
+
+        with open(self.opcheader, 'r') as fh:
+            hcontent = fh.readlines()
+
+        # first match then mask
+        self.assertEqual(hcontent[3], parser.instructions[0].match)
+        self.assertEqual(hcontent[4], parser.instructions[0].mask)
+
+    def testExtendHeaderMultiple(self):
+        pass
 
 
 if __name__ == '__main__':
