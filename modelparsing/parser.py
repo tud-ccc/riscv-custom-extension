@@ -330,10 +330,23 @@ class Extensions:
         self._ops = []
         self._insts = []
 
-        self._opc_templ = os.path.dirname(
-            os.path.realpath(__file__)) + '/opcodes-custom.mako'
-        self._rv_opc_parser = os.path.dirname(
-            os.path.realpath(__file__)) + '/../riscv-opcodes/parse-opcodes'
+        # riscv-opcodes path
+        self._rv_opc = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), '../riscv-opcodes')
+
+        self._opc_templ = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), 'opcodes-custom.mako')
+
+        # files of riscv-opcodes project
+        self._rv_opc_parser = os.path.join(self._rv_opc, 'parse-opcodes')
+
+        # opcode files
+        self._rv_opc_files = []
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-custom'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-pseudo'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-rvc'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-rvc-pseudo'))
 
         self.models_to_ops()
         self.ops_to_insts()
@@ -351,24 +364,34 @@ class Extensions:
 
     def ops_to_insts(self):
         opcodes_cust = Template(filename=self._opc_templ)
-
+        
         opc_cust = 'opcodes-custom'
+        self._rv_opc_files.append(opc_cust)
+
         with open(opc_cust, 'w') as fh:
             fh.write(opcodes_cust.render(operations=self._ops))
 
-        with open(opc_cust, 'r') as fh:
-            ops = fh.read()
-
-        try:
-            os.remove(opc_cust)
-        except OSError:
-            pass
+        opcodes = ''.join([open(f).read() for f in self._rv_opc_files])
 
         p = subprocess.Popen([self._rv_opc_parser,
                               '-c'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE)
-        defines, _ = p.communicate(input=ops)
+        self._rv_opc_header, _ = p.communicate(input=opcodes)
+
+        with open(opc_cust, 'r') as fh:
+            content = fh.read()
+
+        p = subprocess.Popen([self._rv_opc_parser,
+                              '-c'],
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE)
+        defines, _ = p.communicate(input=content)
+
+        try:
+            os.remove(opc_cust)
+        except OSError:
+            pass
 
         d = '\n'
         lines = [e + d for e in defines.split(d)]
@@ -399,6 +422,10 @@ class Extensions:
     @property
     def instructions(self):
         return self._insts
+
+    @property
+    def opc_header(self):
+        return self._rv_opc_header
 
 
 class Parser:
@@ -522,7 +549,7 @@ class Parser:
         of the custom instructions.
         '''
 
-        # we need the content of the header file
+        # check if custom opc header was already included
         with open(self.opch, 'r') as fh:
             content = fh.readlines()
 
