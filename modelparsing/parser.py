@@ -346,7 +346,8 @@ class Extensions:
         self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-custom'))
         self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-pseudo'))
         self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-rvc'))
-        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-rvc-pseudo'))
+        self._rv_opc_files.append(os.path.join(
+            self._rv_opc, 'opcodes-rvc-pseudo'))
 
         self.models_to_ops()
         self.ops_to_insts()
@@ -364,7 +365,7 @@ class Extensions:
 
     def ops_to_insts(self):
         opcodes_cust = Template(filename=self._opc_templ)
-        
+
         opc_cust = 'opcodes-custom'
         self._rv_opc_files.append(opc_cust)
 
@@ -450,44 +451,29 @@ class Parser:
         # start parsing the models
         self.parse_models()
 
-    def remove_models(self):
+    def restore_header(self):
         '''
         Remove all custom extensions.
-        May be only used for unit tests.
+        Restores the saved old header.
         '''
 
         logger.info('Remove custom instructions from GNU binutils files')
-        # read header file
-        with open(self.opch, 'r') as fh:
-            hcontent = fh.readlines()
+        opchold = self.opch + '_old'
+        if os.path.exists(opchold):
+            logger.info('Restore contents from file {}'.format(opchold))
+            with open(opchold, 'r') as fh:
+                content = fh.read()
 
-        # read source file
-        with open(self.opcc, 'r') as fh:
-            ccontent = fh.readlines()
-
-        for inst in self._insts:
-            if inst.match in hcontent:
-                logger.info('Remove {} from {}'.format(inst.match, self.opch))
-                hcontent.remove(inst.match)
-            if inst.mask in hcontent:
-                logger.info('Remove {} from {}'.format(inst.match, self.opcc))
-                hcontent.remove(inst.mask)
-
-            dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
-                inst.name, inst.operands, inst.matchname, inst.maskname)
-
-            if dfn in ccontent:
-                ccontent.remove(dfn)
-
-        # write back modified content
         with open(self.opch, 'w') as fh:
-            hcontent = ''.join(hcontent)
-            fh.write(hcontent)
+            fh.write(content)
 
-        # write back modified content
-        with open(self.opcc, 'w') as fh:
-            ccontent = ''.join(ccontent)
-            fh.write(ccontent)
+        logger.info('Original header restored.')
+
+        try:
+            logger.info('Remove {} from system'.format(opchold))
+            os.remove(opchold)
+        except OSError:
+            pass
 
     def parse_models(self):
         '''
@@ -501,16 +487,17 @@ class Parser:
             self.treewalk(self._args.modelpath)
         else:
             logger.info('Single file, start parsing')
-            model = Model(self._args.modelpath)
+            model=Model(self._args.modelpath)
             self._models.append(model)
 
-        self._insts = Extensions(self._models).instructions
+        self._exts=Extensions(self._models)
+        self._insts=self._exts.instructions
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
         for file in os.listdir(top):
-            pathname = os.path.join(top, file)
-            mode = os.stat(pathname)[ST_MODE]
+            pathname=os.path.join(top, file)
+            mode=os.stat(pathname)[ST_MODE]
 
             if S_ISDIR(mode):
                 # directory
@@ -520,7 +507,7 @@ class Parser:
                 if pathname.endswith('.cc'):
                     logger.info(
                         'Found model definition in file {}'.format(pathname))
-                    model = Model(pathname)
+                    model=Model(pathname)
                     self._models.append(model)
             else:
                 # unknown file type
@@ -551,32 +538,21 @@ class Parser:
 
         # check if custom opc header was already included
         with open(self.opch, 'r') as fh:
-            content = fh.readlines()
+            content=fh.readlines()
 
         # if not existing
         # copy the old header file
         # basically generate new file with old content
-        opchold = self.opch + '_old'
+        opchold=self.opch + '_old'
         if not os.path.exists(opchold):
             logger.info('Copy original {}'.format(self.opch))
             with open(opchold, 'w') as fh:
-                data = ''.join(content)
+                data=''.join(content)
                 fh.write(data)
 
+        # TODO: define some error cases
         # the mask and match defines has to be added in the header file
         for inst in self._insts:
-            # check if entry exists
-            # skip this instruction if so
-            # prevents double define for old custom extensions, if new one was
-            # added
-            if inst.mask in content and inst.match in content:
-                logger.info(
-                    'Mask {!r} and match {!r} '.format(inst.mask, inst.match) +
-                    'already in riscv-opc.h. Therefore skip instertion')
-                # remove instruction from list to prevent generating duplicates
-                # insts.remove(inst)
-                continue
-
             # check whether a mask or a match entry exists but not the
             # corresponding other
             if inst.mask in content and inst.match not in content:
@@ -596,18 +572,9 @@ class Parser:
                 self._insts.remove(inst)
                 continue
 
-            # first line number, where the new opcode can be inserted is 3
-            # insert every entry at line number 3 --> push back the remaining
-            # content
-            logger.info('Adding mask %s' % inst.mask)
-            content.insert(3, inst.mask)
-            logger.info('Adding match %s' % inst.match)
-            content.insert(3, inst.match)
-
-        # write back modified content
+        # write back generated header file
         with open(self.opch, 'w') as fh:
-            content = ''.join(content)
-            fh.write(content)
+            fh.write(self._exts.opc_header)
 
     def extend_source(self):
         '''
