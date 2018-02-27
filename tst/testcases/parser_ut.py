@@ -277,3 +277,53 @@ class TestParser(unittest.TestCase):
         self.assertTrue(parser.instructions[-2].mask in hcontent)
 
         self.assertEqual(len(parser.instructions), 2)
+
+    def testExtendSourceCopyOld(self):
+        # insert a function (do not care if correctly added or not)
+        # and check if old opc source was copied and stored correctly
+        name = 'copysource'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser = Parser(args)
+        parser.opcc = self.opcsource
+        parser.parse_models()
+        parser.extend_source()
+
+        # now the header file should have been copied
+        # check in our folder if we have a file
+        opcc_old = self.opcsource + '_old'
+        self.assertTrue(os.path.exists(opcc_old))
+        self.assertTrue(os.path.isfile(opcc_old))
+        # check contents of file
+        with open(opcc_old, 'r') as fh:
+            content = fh.readlines()
+
+        self.assertTrue(content[0], '{ test }')
+        self.assertTrue(content[-1], '{ test }')
+
+    def testExtendSourceRestoreOldSource(self):
+        # try restoring of old header function
+        name = 'restoresource'
+        filename = self.folderpath + name + '.cc'
+
+        args = self.Args(filename, restore=True)
+        parser = Parser(args)
+        parser.opcc = self.opcsource
+
+        opccold = self.opcsource + '_old'
+        oldcontent = 'old_source'
+        with open(opccold, 'w') as fh:
+            fh.write(oldcontent)
+
+        parser.restore_source()
+
+        with open(self.opcsource, 'r') as fh:
+            ccontent = fh.readlines()
+
+        self.assertEqual(ccontent[0], oldcontent)
+        self.assertEqual(ccontent[-1], oldcontent)
+
+        for file in os.listdir(self.folderpath):
+            self.assertNotEqual(file, opccold)
