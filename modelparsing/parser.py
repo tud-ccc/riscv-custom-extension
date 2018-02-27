@@ -448,8 +448,11 @@ class Parser:
             os.path.realpath(__file__)) + '/../riscv-gnu-toolchain/'\
             + 'riscv-binutils-gdb/opcodes/riscv-opc.c'
 
-        # start parsing the models
-        self.parse_models()
+    def restore(self):
+        '''
+        Restore the toolchain to its defaults.
+        '''
+        self.restore_header()
 
     def restore_header(self):
         '''

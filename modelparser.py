@@ -53,8 +53,13 @@ def main():
     parser.add_argument('-b',
                         '--build',
                         action='store_true',
-                        help='If set, Toolchain and Gem5 will be ' +
+                        help='If set, the toolchain and Gem5 will be ' +
                         'rebuild.')
+    parser.add_argument('-r',
+                        '--restore',
+                        action='store_true',
+                        help='If set, the toolchain will be restored ' +
+                        'to its default.')
     parser.add_argument('-m',
                         '--modelpath',
                         type=str,
@@ -69,8 +74,13 @@ def main():
 
     logger.info('Start parsing models')
     modelparser = Parser(args)
-    # extend compiler with models
-    modelparser.extend_compiler()
+
+    if self.args.restore:
+        modelparser.restore()
+    else:
+        modelparser.parse_models()
+        # extend compiler with models
+        modelparser.extend_compiler()
 
     # modelparser.remove_models()
 

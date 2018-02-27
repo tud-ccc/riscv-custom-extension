@@ -123,6 +123,7 @@ class TestParser(unittest.TestCase):
         args = self.Args(filename)
         parser = Parser(args)
         parser.opch = self.opcheader
+        parser.parse_models()
         parser.extend_header()
 
         # now the header file should have been copied
@@ -147,6 +148,7 @@ class TestParser(unittest.TestCase):
         args = self.Args(filename, restore=True)
         parser = Parser(args)
         parser.opch = self.opcheader
+        parser.parse_models()
 
         opchold = self.opcheader + '_old'
         oldcontent = 'old_header'
@@ -161,6 +163,9 @@ class TestParser(unittest.TestCase):
         self.assertEqual(hcontent[0], oldcontent)
         self.assertEqual(hcontent[-1], oldcontent)
 
+        for file in os.listdir(self.folderpath):
+            self.assertNotEqual(file, opchold)
+
     def testExtendHeaderSingle(self):
         # extend the header with a single model
         name = 'singleHeader'
@@ -168,10 +173,9 @@ class TestParser(unittest.TestCase):
         self.genModel(name, filename)
 
         args = self.Args(filename)
-        # exts = self.Extensions(self.opcheader)
         parser = Parser(args)
         parser.opch = self.opcheader
-        # parser._exts = exts
+        parser.parse_models()
         parser.extend_header()
 
         with open(self.opcheader, 'r') as fh:
@@ -208,6 +212,7 @@ class TestParser(unittest.TestCase):
         args = self.Args(self.folderpath)
         parser = Parser(args)
         parser.opch = self.opcheader
+        parser.parse_models()
         parser.extend_header()
 
         with open(self.opcheader, 'r') as fh:
@@ -229,10 +234,12 @@ class TestParser(unittest.TestCase):
         args = self.Args(filename)
         parser1 = Parser(args)
         parser1.opch = self.opcheader
+        parser1.parse_models()
         parser1.extend_header()
 
         parser2 = Parser(args)
         parser2.opch = self.opcheader
+        parser2.parse_models()
         parser2.extend_header()
 
         with open(self.opcheader, 'r') as fh:
@@ -256,6 +263,7 @@ class TestParser(unittest.TestCase):
         args = self.Args(self.folderpath)
         parser = Parser(args)
         parser.opch = self.opcheader
+        parser.parse_models()
         parser.extend_header()
 
         with open(self.opcheader, 'r') as fh:
