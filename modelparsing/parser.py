@@ -452,7 +452,11 @@ class Parser:
         '''
         Restore the toolchain to its defaults.
         '''
+
+        logger.info('Remove custom instructions from GNU binutils files')
+        
         self.restore_header()
+        self.restore_source()
 
     def restore_header(self):
         '''
@@ -460,23 +464,50 @@ class Parser:
         Restores the saved old header.
         '''
 
-        logger.info('Remove custom instructions from GNU binutils files')
+        logger.info('Restore original header file')
         opchold = self.opch + '_old'
         if os.path.exists(opchold):
             logger.info('Restore contents from file {}'.format(opchold))
             with open(opchold, 'r') as fh:
                 content = fh.read()
 
-        with open(self.opch, 'w') as fh:
-            fh.write(content)
+            with open(self.opch, 'w') as fh:
+                fh.write(content)
 
-        logger.info('Original header restored.')
+            logger.info('Original header restored')
 
-        try:
-            logger.info('Remove {} from system'.format(opchold))
-            os.remove(opchold)
-        except OSError:
-            pass
+            try:
+                logger.info('Remove {} from system'.format(opchold))
+                os.remove(opchold)
+            except OSError:
+                pass
+        else:
+            logger.info('Nothing to do')
+
+    def restore_source(self):
+        '''
+        Restores the saved old source.
+        '''
+
+        logger.info('Restore original source file')
+        opccold = self.opcc + '_old'
+        if os.path.exists(opccold):
+            logger.info('Restore contents from file {}'.format(opccold))
+            with open(opccold, 'r') as fh:
+                content = fh.read()
+
+            with open(self.opcc, 'w') as fh:
+                fh.write(content)
+
+            logger.info('Original source restored')
+
+            try:
+                logger.info('Remove {} from system'.format(opccold))
+                os.remove(opccold)
+            except OSError:
+                pass
+        else:
+            logger.info('Nothing to do')
 
     def parse_models(self):
         '''

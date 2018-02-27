@@ -71,7 +71,7 @@ class TestParser(unittest.TestCase):
                 '#define RISCV_ENCODING_H\n')
         self.opcsource = self.folderpath + 'opcsource.c'
         with open(self.opcsource, 'w') as fh:
-            fh.write('')
+            fh.write('{ test }')
 
     def tearDown(self):
         # remove generated file
@@ -114,7 +114,7 @@ class TestParser(unittest.TestCase):
             fh.write(modelgen.render(model=self.ccmodel))
 
     def testExtendHeaderCopyOld(self):
-        # insert a function (do not car if correctly added or not)
+        # insert a function (do not care if correctly added or not)
         # and check if old header was copied and stored correctly
         name = 'copyheader'
         filename = self.folderpath + name + '.cc'
@@ -143,12 +143,10 @@ class TestParser(unittest.TestCase):
         # try restoring of old header function
         name = 'restoreheader'
         filename = self.folderpath + name + '.cc'
-        self.genModel(name, filename)
 
         args = self.Args(filename, restore=True)
         parser = Parser(args)
         parser.opch = self.opcheader
-        parser.parse_models()
 
         opchold = self.opcheader + '_old'
         oldcontent = 'old_header'

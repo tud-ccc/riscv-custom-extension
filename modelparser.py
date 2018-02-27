@@ -75,7 +75,7 @@ def main():
     logger.info('Start parsing models')
     modelparser = Parser(args)
 
-    if self.args.restore:
+    if args.restore:
         modelparser.restore()
     else:
         modelparser.parse_models()
