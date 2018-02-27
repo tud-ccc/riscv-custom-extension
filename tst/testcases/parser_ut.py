@@ -348,6 +348,27 @@ class TestParser(unittest.TestCase):
             content = fh.readlines()
 
         self.assertEqual(len(content), 7)
+        self.assertEqual(
+            content[2],
+            '{"itype",  "I",  "d,s,j", MATCH_ITYPE, MASK_ITYPE, match_opcode, 0 },\n')
 
     def testExtendSourceRType(self):
-        pass
+        name = 'rtype'
+        self.ftype = 'R'
+        funct7 = 0x7f
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename, funct7)
+
+        args = self.Args(filename)
+        parser = Parser(args)
+        parser.opcc = self.opcsource
+        parser.parse_models()
+        parser.extend_source()
+
+        with open(self.opcsource, 'r') as fh:
+            content = fh.readlines()
+
+        self.assertEqual(len(content), 7)
+        self.assertEqual(
+            content[2],
+            '{"rtype",  "I",  "d,s,t", MATCH_RTYPE, MASK_RTYPE, match_opcode, 0 },\n')
