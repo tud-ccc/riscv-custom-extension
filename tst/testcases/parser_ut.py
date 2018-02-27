@@ -71,7 +71,12 @@ class TestParser(unittest.TestCase):
                 '#define RISCV_ENCODING_H\n')
         self.opcsource = self.folderpath + 'opcsource.c'
         with open(self.opcsource, 'w') as fh:
-            fh.write('{ test }')
+            fh.write('{\n' +
+                     '{ test },\n' +
+                     '\n' +
+                     '/* Terminate the list.  */\n' +
+                     '{0, 0, 0, 0, 0, 0, 0}\n' +
+                     '};')
 
     def tearDown(self):
         # remove generated file
@@ -327,3 +332,22 @@ class TestParser(unittest.TestCase):
 
         for file in os.listdir(self.folderpath):
             self.assertNotEqual(file, opccold)
+
+    def testExtendSourceIType(self):
+        name = 'itype'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser = Parser(args)
+        parser.opcc = self.opcsource
+        parser.parse_models()
+        parser.extend_source()
+
+        with open(self.opcsource, 'r') as fh:
+            content = fh.readlines()
+
+        self.assertEqual(len(content), 7)
+
+    def testExtendSourceRType(self):
+        pass
