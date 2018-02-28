@@ -313,7 +313,7 @@ class TestExtensions(unittest.TestCase):
         self.assertEquals(insts[-1].name, 'rtype')
         self.assertEquals(insts[-1].operands, 'd,s,t')
 
-    def testExtensionsInstructionsOverlappingSameIType(self):
+    def testExtensionsInstructionsOverlappingIIType(self):
         name = 'itype'
         models = [self.Model(name, self.form, self.opc, self.funct3)]
 
@@ -323,14 +323,44 @@ class TestExtensions(unittest.TestCase):
         with self.assertRaises(OpcodeError):
             Extensions(models)
 
-    def testExtensionsInstructionsOverlappingSameRType(self):
+    def testExtensionsInstructionsOverlappingRRType(self):
         name = 'rtype'
         self.form = 'R'
         funct7 = 0x00
         models = [self.Model(name, self.form, self.opc, self.funct3, funct7)]
 
         name = 'rtype0'
-        models.append(self.Model(name, self.form, self.opc, self.funct3, funct7))
+        models.append(self.Model(name, self.form,
+                                 self.opc, self.funct3, funct7))
+
+        with self.assertRaises(OpcodeError):
+            Extensions(models)
+
+    def testExtensionsInstructionsOverlappingIRType(self):
+        name = 'itype'
+        models = [self.Model(name, self.form, self.opc, self.funct3)]
+
+        name = 'rtype'
+        self.form = 'R'
+        funct7 = 0x03
+        models.append(self.Model(name,
+                                 self.form,
+                                 self.opc,
+                                 self.funct3,
+                                 funct7))
+
+        with self.assertRaises(OpcodeError):
+            Extensions(models)
+
+    def testExtensionsInstructionsOverlappingRIType(self):
+        name = 'rtype'
+        self.form = 'R'
+        funct7 = 0x03
+        models = [self.Model(name, self.form, self.opc, self.funct3, funct7)]
+
+        name = 'itype'
+        self.form = 'I'
+        models.append(self.Model(name, self.form, self.opc, self.funct3))
 
         with self.assertRaises(OpcodeError):
             Extensions(models)
