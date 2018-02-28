@@ -158,3 +158,19 @@ class TestExtensions(unittest.TestCase):
         self.assertEquals(insts[-1].matchvalue, '0x400100b')
         self.assertEquals(insts[-1].name, 'rtype')
         self.assertEquals(insts[-1].operands, 'd,s,t')
+
+    def testExtensionsInstructionsOverlapping(self):
+        name = 'itype'
+        models = [self.Model(name, self.form, self.opc, self.funct3)]
+
+        name = 'rtype'
+        self.form = 'R'
+        funct7 = 0x00
+        models.append(self.Model(name,
+                                 self.form,
+                                 self.opc,
+                                 self.funct3,
+                                 funct7))
+
+        with self.assertRaises(OpcodeError):
+            Extensions(models)
