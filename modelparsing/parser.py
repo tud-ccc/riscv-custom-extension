@@ -454,7 +454,7 @@ class Parser:
         '''
 
         logger.info('Remove custom instructions from GNU binutils files')
-        
+
         self.restore_header()
         self.restore_source()
 
@@ -521,17 +521,17 @@ class Parser:
             self.treewalk(self._args.modelpath)
         else:
             logger.info('Single file, start parsing')
-            model=Model(self._args.modelpath)
+            model = Model(self._args.modelpath)
             self._models.append(model)
 
-        self._exts=Extensions(self._models)
-        self._insts=self._exts.instructions
+        self._exts = Extensions(self._models)
+        self._insts = self._exts.instructions
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
         for file in os.listdir(top):
-            pathname=os.path.join(top, file)
-            mode=os.stat(pathname)[ST_MODE]
+            pathname = os.path.join(top, file)
+            mode = os.stat(pathname)[ST_MODE]
 
             if S_ISDIR(mode):
                 # directory
@@ -541,7 +541,7 @@ class Parser:
                 if pathname.endswith('.cc'):
                     logger.info(
                         'Found model definition in file {}'.format(pathname))
-                    model=Model(pathname)
+                    model = Model(pathname)
                     self._models.append(model)
             else:
                 # unknown file type
@@ -572,16 +572,16 @@ class Parser:
 
         # check if custom opc header was already included
         with open(self.opch, 'r') as fh:
-            content=fh.readlines()
+            content = fh.readlines()
 
         # if not existing
         # copy the old header file
         # basically generate new file with old content
-        opchold=self.opch + '_old'
+        opchold = self.opch + '_old'
         if not os.path.exists(opchold):
             logger.info('Copy original {}'.format(self.opch))
             with open(opchold, 'w') as fh:
-                data=''.join(content)
+                data = ''.join(content)
                 fh.write(data)
 
         # TODO: define some error cases
