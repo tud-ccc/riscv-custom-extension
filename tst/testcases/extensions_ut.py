@@ -45,5 +45,22 @@ class TestExtensions(unittest.TestCase):
         self.opc = 0x02
         self.funct3 = 0x00
 
+    def testExtensionsModelToOpsIType(self):
+        name = 'itype'
+        models = [self.Model(name, self.form, self.opc, self.funct3)]
+
+        ext = Extensions(models)
+        insts = ext.instructions
+
+        self.assertEquals(len(insts), 1)
+
     def testExtensionsModelToOpsRType(self):
-        pass
+        name = 'rtype'
+        self.form = 'R'
+        funct7 = 0x02
+        models = [self.Model(name, self.form, self.opc, self.funct3, funct7)]
+
+        ext = Extensions(models)
+        insts = ext.instructions
+
+        self.assertEquals(len(insts), 1)

@@ -212,41 +212,6 @@ class Model:
         return self._opc
 
 
-class Operation:
-    '''
-    Represents one operation, that is parsed from each model.
-    This class is just used temporarily on the way to create
-    instructions from the models.
-    '''
-
-    def __init__(self, form, funct3, funct7, name, opc):
-        self._form = form  # format
-        self._funct3 = funct3  # funct3 encoding
-        self._funct7 = funct7  # funct7 encoding, used by reg reg ops
-        self._name = name  # the name that shall occure in the assembler
-        self._opc = opc  # opcode - inst[6:2]
-
-    @property
-    def form(self):
-        return self._form
-
-    @property
-    def funct3(self):
-        return self._funct3
-
-    @property
-    def funct7(self):
-        return self._funct7
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def opc(self):
-        return self._opc
-
-
 class Instruction:
     '''
     Class, that represents one single custom instruction.
@@ -328,7 +293,6 @@ class Extensions:
 
     def __init__(self, models):
         self._models = models
-        self._ops = []
         self._insts = []
 
         # riscv-opcodes path
@@ -350,19 +314,7 @@ class Extensions:
         self._rv_opc_files.append(os.path.join(
             self._rv_opc, 'opcodes-rvc-pseudo'))
 
-        self.models_to_ops()
         self.ops_to_insts()
-
-    def models_to_ops(self):
-        logger.info('Generate operations from models')
-
-        for model in self._models:
-            op = Operation(model.form,
-                           model.funct3,
-                           model.funct7,
-                           model.name,
-                           model.opc)
-            self._ops.append(op)
 
     def ops_to_insts(self):
         logger.info('Generate instructions from operations')
@@ -376,7 +328,7 @@ class Extensions:
 
         # render custom opcodes template
         with open(opc_cust, 'w') as fh:
-            fh.write(opcodes_cust.render(operations=self._ops))
+            fh.write(opcodes_cust.render(operations=self._models))
 
         with open(opc_cust, 'r') as fh:
             content = fh.read()
@@ -413,11 +365,9 @@ class Extensions:
         # just for sanity, should never go wrong
         assert len(masks) == len(
             matches), 'Length of mask and match arrays differ'
-        assert len(masks) == len(
-            self._ops), 'Opcodes of some operations overlapped'
 
         # create instructions
-        for i in range(0, len(self._ops)):
+        for i in range(0, len(self._models)):
             inst = Instruction(self._models[i].form,
                                masks[i],
                                matches[i],
@@ -448,10 +398,6 @@ class Extensions:
     @property
     def models(self):
         return self._models
-
-    @property
-    def operations(self):
-        return self._ops
 
     @property
     def instructions(self):
