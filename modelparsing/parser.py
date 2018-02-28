@@ -4,6 +4,7 @@ import os
 import subprocess
 
 from exceptions import ConsistencyError
+from exceptions import OpcodeError
 from mako.template import Template
 from stat import *
 
@@ -364,53 +365,85 @@ class Extensions:
             self._ops.append(op)
 
     def ops_to_insts(self):
+        logger.info('Generate instructions from operations')
+        # use a mako template to generate files, that are equal to the ones
+        # in the riscv-opcodes project
         opcodes_cust = Template(filename=self._opc_templ)
-
-        opc_cust = 'opcodes-custom'
+        # opcodes custom is the file, that was generated
+        opc_cust = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), 'opcodes-custom')
         self._rv_opc_files.append(opc_cust)
 
+        # render custom opcodes template
         with open(opc_cust, 'w') as fh:
             fh.write(opcodes_cust.render(operations=self._ops))
-
-        opcodes = ''.join([open(f).read() for f in self._rv_opc_files])
-
-        p = subprocess.Popen([self._rv_opc_parser,
-                              '-c'],
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE)
-        self._rv_opc_header, _ = p.communicate(input=opcodes)
 
         with open(opc_cust, 'r') as fh:
             content = fh.read()
 
+        # start parse_opcodes script with our custom instructions
         p = subprocess.Popen([self._rv_opc_parser,
                               '-c'],
                              stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE)
-        defines, _ = p.communicate(input=content)
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        defines, err = p.communicate(input=content)
 
-        try:
-            os.remove(opc_cust)
-        except OSError:
-            pass
+        if not defines or err:
+            # an error occured
+            logger.error(err.rstrip())
+            try:
+                os.remove(opc_cust)
+            except OSError:
+                pass
+            raise OpcodeError('Function opcode could not be generated')
 
+        # split the stdout output
+        # newline character is used as seperator
         d = '\n'
         lines = [e + d for e in defines.split(d)]
 
+        # collect all masks
         masks = [
             entry for entry in lines if entry.startswith('#define MASK')]
+        # collect all entrys
         matches = [
             entry for entry in lines if entry.startswith('#define MATCH')]
 
+        # just for sanity, should never go wrong
         assert len(masks) == len(
             matches), 'Length of mask and match arrays differ'
+        assert len(masks) == len(
+            self._ops), 'Opcodes of some operations overlapped'
 
+        # create instructions
         for i in range(0, len(self._ops)):
             inst = Instruction(self._models[i].form,
                                masks[i],
                                matches[i],
                                self._models[i].name)
             self._insts.append(inst)
+
+        # join the content of all opcode files
+        # used to generate a single riscv-opc.h containing all operations
+        opcodes = ''.join([open(f).read() for f in self._rv_opc_files])
+
+        p = subprocess.Popen([self._rv_opc_parser,
+                              '-c'],
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        # for now just save the output string, used later
+        self._rv_opc_header, err = p.communicate(input=opcodes)
+
+        try:
+            logger.error(err.rstrip())
+            os.remove(opc_cust)
+        except OSError:
+            pass
+
+        if not self._rv_opc_header or err:
+            raise OpcodeError('Function opcode could not be generated')
 
     @property
     def models(self):
@@ -585,26 +618,7 @@ class Parser:
                 fh.write(data)
 
         # TODO: define some error cases
-        # the mask and match defines has to be added in the header file
-        for inst in self._insts:
-            # check whether a mask or a match entry exists but not the
-            # corresponding other
-            if inst.mask in content and inst.match not in content:
-                logger.warn(
-                    'Opcode of instruction was changed. ' +
-                    'Assuming you know what you are doing. ' +
-                    'Overwriting old entry.')
-                # remove instruction from list to prevent generating duplicates
-                self._insts.remove(inst)
-                continue
-
-            if inst.mask not in content and inst.match in content:
-                logger.warn(
-                    'Match already existing, but not Mask. ' +
-                    'Skip insertion')
-                # remove instruction from list to prevent generating duplicates
-                self._insts.remove(inst)
-                continue
+        # TODO: better in extension class
 
         # write back generated header file
         with open(self.opch, 'w') as fh:
