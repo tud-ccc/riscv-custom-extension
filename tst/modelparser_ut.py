@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from testcases import extensions_ut
 from testcases import instruction_ut
 from testcases import model_ut
 from testcases import operation_ut
@@ -11,6 +12,8 @@ import unittest
 if __name__ == '__main__':
     # load test cases
     suiteList = []
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        extensions_ut.TestExtensions))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
         instruction_ut.TestInstruction))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
