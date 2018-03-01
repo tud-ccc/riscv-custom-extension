@@ -17,10 +17,10 @@ class TestInstruction(unittest.TestCase):
         self.formr = 'R'
         self.mask = 'MASK_NAME 0x01'
         self.maskname = 'MASK_NAME'
-        self.maskvalue = '0x01'
+        self.maskvalue = 0x1
         self.match = 'MATCH_NAME 0x02'
         self.matchname = 'MATCH_NAME'
-        self.matchvalue = '0x02'
+        self.matchvalue = 0x2
         self.name0 = 'test0'
         # I-Type
         self.formi = 'I'

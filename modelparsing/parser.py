@@ -226,11 +226,11 @@ class Instruction:
         # the mask name
         self._maskname = mask.split()[-2]
         # the mask value
-        self._maskvalue = mask.split()[-1]
+        self._maskvalue = int(mask.split()[-1], 16)
         # the match name
         self._matchname = match.split()[-2]
         # the match value
-        self._matchvalue = match.split()[-1]
+        self._matchvalue = int(match.split()[-1], 16)
 
         # set right operands that are used in binutils' opc parsing
         # d -> Rd
@@ -316,6 +316,47 @@ class Extensions:
 
         self.gen_instructions()
 
+    def check_opcodes(self, inst):
+        # check for overlapping opcodes
+        # NOTE: Until fix in riscv/riscv-opcodes we have to do it manually.
+        # Therefore we do the check here, instead of checking it while adding
+        # the model. This way the tests doesn't have to be adapted, once the
+        # script is patched.
+        logger.info('Checking if opcodes overlap')
+        logger.debug('{} {}'.format(inst.name, inst.form))
+        for inst2 in self._insts:
+            if inst2.name == inst.name:
+                # same instruction
+                # skip
+                continue
+            if inst2.form == 'R':
+                if (inst2.matchvalue & inst.maskvalue) == inst.matchvalue:
+                    logger.debug('{}.match {}'.format(
+                        inst.name, hex(inst.matchvalue)))
+                    logger.debug('{}.match {}'.format(
+                        inst.name, hex(inst.maskvalue)))
+                    logger.debug('{}.match {}'.format(
+                        inst2.name, hex(inst2.matchvalue)))
+                    logger.debug('{}.match {}'.format(
+                        inst2.name, hex(inst2.maskvalue)))
+                    logger.error('{} and {} overlap'.format(
+                        inst.name, inst2.name))
+                    raise OpcodeError('Function opcode could not be generated')
+            if inst2.form == 'I':
+                if (inst2.matchvalue & inst.maskvalue) == (
+                        inst.matchvalue & inst2.maskvalue):
+                    logger.debug('{}.match {}'.format(
+                        inst.name, hex(inst.matchvalue)))
+                    logger.debug('{}.match {}'.format(
+                        inst.name, hex(inst.maskvalue)))
+                    logger.debug('{}.match {}'.format(
+                        inst2.name, hex(inst2.matchvalue)))
+                    logger.debug('{}.match {}'.format(
+                        inst2.name, hex(inst2.maskvalue)))
+                    logger.error('{} and {} overlap'.format(
+                        inst.name, inst2.name))
+                    raise OpcodeError('Function opcode could not be generated')
+
     def gen_instructions(self):
         logger.info('Generate instructions from operations')
         # use a mako template to generate files, that are equal to the ones
@@ -373,6 +414,10 @@ class Extensions:
                                matches[i],
                                self._models[i].name)
             self._insts.append(inst)
+
+        # check opcodes for not captured errors
+        for inst in self._insts:
+            self.check_opcodes(inst)
 
         # join the content of all opcode files
         # used to generate a single riscv-opc.h containing all operations
@@ -522,6 +567,7 @@ class Parser:
                     logger.info(
                         'Found model definition in file {}'.format(pathname))
                     model = Model(pathname)
+
                     self._models.append(model)
             else:
                 # unknown file type
