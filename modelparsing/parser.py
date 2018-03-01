@@ -391,6 +391,10 @@ class Extensions:
                 pass
             raise OpcodeError('Function opcode could not be generated')
 
+        # adapt the defines
+        self._cust_header = defines.replace(
+            'RISCV_ENCODING_H', 'RISCV_CUSTOM_ENCODING_H', 2)
+
         # split the stdout output
         # newline character is used as seperator
         d = '\n'
@@ -452,6 +456,10 @@ class Extensions:
     def opc_header(self):
         return self._rv_opc_header
 
+    @property
+    def cust_header(self):
+        return self._cust_header
+
 
 class Parser:
     '''
@@ -462,15 +470,21 @@ class Parser:
     def __init__(self, args):
         self._args = args
         self._models = []
+        self._exts = None
+        self._insts = []
 
         # header file that needs to be edited
-        self.opch = os.path.dirname(
-            os.path.realpath(__file__)) + '/../riscv-gnu-toolchain/'\
-            + 'riscv-binutils-gdb/include/opcode/riscv-opc.h'
+        self.opch = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), '/../riscv-gnu-toolchain/' +
+            'riscv-binutils-gdb/include/opcode/riscv-opc.h')
+        # custom opc.h file
+        self.opch_cust = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), '/../riscv-gnu-toolchain/' +
+            'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h')
         # c source file that needs to be edited
-        self.opcc = os.path.dirname(
-            os.path.realpath(__file__)) + '/../riscv-gnu-toolchain/'\
-            + 'riscv-binutils-gdb/opcodes/riscv-opc.c'
+        self.opcc = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), '/../riscv-gnu-toolchain/' +
+            'riscv-binutils-gdb/opcodes/riscv-opc.c')
 
     def restore(self):
         '''
@@ -492,6 +506,7 @@ class Parser:
         opchold = self.opch + '_old'
         if os.path.exists(opchold):
             logger.info('Restore contents from file {}'.format(opchold))
+
             with open(opchold, 'r') as fh:
                 content = fh.read()
 
@@ -503,6 +518,12 @@ class Parser:
             try:
                 logger.info('Remove {} from system'.format(opchold))
                 os.remove(opchold)
+            except OSError:
+                pass
+            # remove custom file
+            try:
+                logger.info('Remove {} from system'.format(self.opch_cust))
+                os.remove(self.opch_cust)
             except OSError:
                 pass
         else:
@@ -596,9 +617,9 @@ class Parser:
         of the custom instructions.
         '''
 
-        # check if custom opc header was already included
+        # read the content of riscv opc header
         with open(self.opch, 'r') as fh:
-            content = fh.readlines()
+            content = fh.read()
 
         # if not existing
         # copy the old header file
@@ -607,15 +628,21 @@ class Parser:
         if not os.path.exists(opchold):
             logger.info('Copy original {}'.format(self.opch))
             with open(opchold, 'w') as fh:
-                data = ''.join(content)
-                fh.write(data)
+                fh.write(content)
 
-        # TODO: define some error cases
-        # TODO: better in extension class
+        # TODO: do we need to check something here?
+
+        # at first, we create our own custom opc header file
+        # write file
+        with open(self.opch_cust, 'w') as fh:
+            fh.write(self._exts.cust_header)
+
+        # write the include statement for our custom header
+        content = '#include "riscv-custom-opc.h"\n' + content
 
         # write back generated header file
         with open(self.opch, 'w') as fh:
-            fh.write(self._exts.opc_header)
+            fh.write(content)
 
     def extend_source(self):
         '''
@@ -675,9 +702,13 @@ class Parser:
         return self._args
 
     @property
-    def models(self):
-        return self._models
+    def extensions(self):
+        return self._exts
 
     @property
     def instructions(self):
         return self._insts
+
+    @property
+    def models(self):
+        return self._models
