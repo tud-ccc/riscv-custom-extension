@@ -213,6 +213,37 @@ class TestParser(unittest.TestCase):
         self.assertEqual(len(hcontent), 4)
         self.assertEqual(hcontent[0], '#include "riscv-custom-opc.h"\n')
 
+    def testExtendHeaderPatchRiscvOpcHMultiple(self):
+        # purpose is to check if the include statement is only added once
+        name = 'testHeader0'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser = Parser(args)
+        parser.opch = self.opcheader
+        parser.opch_cust = self.opcheader_cust
+        parser.parse_models()
+        parser.extend_header()
+
+        name = 'testHeader1'
+        self.funct3 = 0x01
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser1 = Parser(args)
+        parser1.opch = self.opcheader
+        parser1.opch_cust = self.opcheader_cust
+        parser1.parse_models()
+        parser1.extend_header()
+
+        with open(self.opcheader, 'r') as fh:
+            content = fh.readlines()
+
+        self.assertEqual(content[0], '#include "riscv-custom-opc.h"\n')
+        self.assertNotEqual(content[1], '#include "riscv-custom-opc.h"\n')
+
     def testExtendHeaderReplacedDefines(self):
         # check if the right ifdefs are in the file
         name = 'repl'

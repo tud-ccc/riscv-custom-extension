@@ -453,10 +453,6 @@ class Extensions:
         return self._insts
 
     @property
-    def opc_header(self):
-        return self._rv_opc_header
-
-    @property
     def cust_header(self):
         return self._cust_header
 
@@ -638,7 +634,8 @@ class Parser:
             fh.write(self._exts.cust_header)
 
         # write the include statement for our custom header
-        content = '#include "riscv-custom-opc.h"\n' + content
+        if '#include "riscv-custom-opc.h"\n' not in content:
+            content = '#include "riscv-custom-opc.h"\n' + content
 
         # write back generated header file
         with open(self.opch, 'w') as fh:
