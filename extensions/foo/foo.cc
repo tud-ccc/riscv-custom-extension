@@ -27,7 +27,7 @@
 #include <cstdint>
 
 uint8_t opc    = 0x02;  // opc, 5 bits
-uint8_t funct3 = 0x00;  // funct3, 3 bits
+uint8_t funct3 = 0x01;  // funct3, 3 bits
 
 void foo(
         uint32_t Rd_uw,

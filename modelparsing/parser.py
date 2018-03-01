@@ -314,9 +314,9 @@ class Extensions:
         self._rv_opc_files.append(os.path.join(
             self._rv_opc, 'opcodes-rvc-pseudo'))
 
-        self.ops_to_insts()
+        self.gen_instructions()
 
-    def ops_to_insts(self):
+    def gen_instructions(self):
         logger.info('Generate instructions from operations')
         # use a mako template to generate files, that are equal to the ones
         # in the riscv-opcodes project
@@ -508,6 +508,7 @@ class Parser:
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
+        logger.debug('Directory conten: {}'.format(os.listdir(top)))
         for file in os.listdir(top):
             pathname = os.path.join(top, file)
             mode = os.stat(pathname)[ST_MODE]
