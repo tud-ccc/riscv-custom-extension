@@ -392,8 +392,11 @@ class Extensions:
             raise OpcodeError('Function opcode could not be generated')
 
         # adapt the defines
-        self._cust_header = defines.replace(
+        defines = defines.replace(
             'RISCV_ENCODING_H', 'RISCV_CUSTOM_ENCODING_H', 2)
+        defines = defines.replace('DECLARE_CSR', 'DECLARE_CUSTOM_CSR')
+        defines = defines.replace('DECLARE_CAUSE', 'DECLARE_CUSTOM_CAUSE')
+        self._cust_header = defines
 
         # split the stdout output
         # newline character is used as seperator
@@ -471,16 +474,21 @@ class Parser:
 
         # header file that needs to be edited
         self.opch = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '/../riscv-gnu-toolchain/' +
-            'riscv-binutils-gdb/include/opcode/riscv-opc.h')
+            os.path.realpath(__file__)), ('../riscv-gnu-toolchain/' +
+                                          'riscv-binutils-gdb/include/opcode/riscv-opc.h'
+                                          ))
         # custom opc.h file
         self.opch_cust = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '/../riscv-gnu-toolchain/' +
+            os.path.realpath(__file__)), '../riscv-gnu-toolchain/' +
             'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h')
         # c source file that needs to be edited
         self.opcc = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '/../riscv-gnu-toolchain/' +
+            os.path.realpath(__file__)), '../riscv-gnu-toolchain/' +
             'riscv-binutils-gdb/opcodes/riscv-opc.c')
+
+        assert os.path.exists(self.opch)
+        assert os.path.exists(os.path.dirname(self.opch_cust))
+        assert os.path.exists(self.opcc)
 
     def restore(self):
         '''
