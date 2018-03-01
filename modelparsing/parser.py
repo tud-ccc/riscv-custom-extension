@@ -307,12 +307,12 @@ class Extensions:
 
         # opcode files
         self._rv_opc_files = []
-        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes'))
-        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-custom'))
         self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-pseudo'))
-        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-rvc'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes'))
         self._rv_opc_files.append(os.path.join(
             self._rv_opc, 'opcodes-rvc-pseudo'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-rvc'))
+        self._rv_opc_files.append(os.path.join(self._rv_opc, 'opcodes-custom'))
 
         self.gen_instructions()
 
