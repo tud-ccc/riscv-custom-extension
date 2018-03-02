@@ -578,7 +578,7 @@ class Parser:
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
-        logger.debug('Directory conten: {}'.format(os.listdir(top)))
+        logger.debug('Directory content: {}'.format(os.listdir(top)))
         for file in os.listdir(top):
             pathname = os.path.join(top, file)
             mode = os.stat(pathname)[ST_MODE]
