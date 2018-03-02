@@ -565,11 +565,13 @@ class Parser:
         '''
 
         logger.info('Determine if modelpath is a folder or a single file')
+        self._isfile = False
         if os.path.isdir(self._args.modelpath):
             logger.info('Traverse over directory')
             self.treewalk(self._args.modelpath)
         else:
             logger.info('Single file, start parsing')
+            self._isfile = True
             model = Model(self._args.modelpath)
             self._models.append(model)
 
@@ -634,8 +636,6 @@ class Parser:
             with open(opchold, 'w') as fh:
                 fh.write(content)
 
-        # TODO: do we need to check something here?
-
         # at first, we create our own custom opc header file
         # write file
         with open(self.opch_cust, 'w') as fh:
@@ -670,18 +670,6 @@ class Parser:
                 fh.write(data)
 
         for inst in self._insts:
-            # check if entry exists
-            # skip this instruction if so
-            # prevents double define for old custom extensions, if new one was
-            # added
-            if any(inst.name in string for string in content):
-                logger.info(
-                    'Instruction {} already defined. Skip instertion'.format(
-                        inst.name))
-                # remove instruction from list
-                self._insts.remove(inst)
-                continue
-
             # build string that has to be added to the content of the file
             dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
                 inst.name, inst.operands, inst.matchname, inst.maskname)

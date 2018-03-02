@@ -304,7 +304,7 @@ class TestParser(unittest.TestCase):
         filename = self.folderpath + name + '.cc'
         self.genModel(name, filename)
 
-        name = 'testHeader3'
+        name = 'testHeader'
         self.funct3 = 0x01
         filename = self.folderpath + name + '.cc'
         self.genModel(name, filename)
@@ -358,6 +358,43 @@ class TestParser(unittest.TestCase):
         self.assertTrue(parser.instructions[-2].mask in hcontent)
 
         self.assertEqual(len(parser.instructions), 2)
+
+    def testExtendHeaderTwoTimesSingleModel(self):
+        # add two models, both should appear in header file
+        name = 'func1'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser1 = Parser(args)
+        parser1.opch = self.opcheader
+        parser1.opch_cust = self.opcheader_cust
+        parser1.parse_models()
+        parser1.extend_header()
+
+        name = 'func2'
+        filename = self.folderpath + name + '.cc'
+        self.funct3 += 1
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser2 = Parser(args)
+        parser2.opch = self.opcheader
+        parser2.opch_cust = self.opcheader_cust
+        parser2.parse_models()
+        parser2.extend_header()
+
+        with open(self.opcheader_cust, 'r') as fh:
+            hcontent = fh.readlines()
+
+        self.assertTrue(parser1.instructions[0].match in hcontent)
+        self.assertTrue(parser1.instructions[-1].match in hcontent)
+        self.assertTrue(parser1.instructions[0].mask in hcontent)
+        self.assertTrue(parser1.instructions[-1].mask in hcontent)
+        self.assertTrue(parser2.instructions[0].match in hcontent)
+        self.assertTrue(parser2.instructions[-1].match in hcontent)
+        self.assertTrue(parser2.instructions[0].mask in hcontent)
+        self.assertTrue(parser2.instructions[-1].mask in hcontent)
 
     def testExtendSourceCopyOld(self):
         # insert a function (do not care if correctly added or not)
@@ -448,3 +485,68 @@ class TestParser(unittest.TestCase):
         self.assertEqual(
             content[2],
             '{"rtype",  "I",  "d,s,t", MATCH_RTYPE, MASK_RTYPE, match_opcode, 0 },\n')
+
+    def testExtendSourceMultiple(self):
+        # extend the source with multiple models
+        name = 'testsource0'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        name = 'testsource1'
+        self.funct3 = 0x01
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        name = 'testsource2'
+        self.opc = 0x0a
+        self.funct3 = 0x00
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        # what if name is in other name
+        name = 'testsource'
+        self.funct3 = 0x01
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(self.folderpath)
+        parser = Parser(args)
+        parser.opcc = self.opcsource
+        parser.parse_models()
+        parser.extend_source()
+
+        with open(self.opcsource, 'r') as fh:
+            content = fh.readlines()
+
+        self.assertEqual(len(content), 10)
+        self.assertTrue('{"testsource0",  "I",  "d,s,j", MATCH_TESTSOURCE0, MASK_TESTSOURCE0, match_opcode, 0 },\n' in content)
+        self.assertTrue('{"testsource1",  "I",  "d,s,j", MATCH_TESTSOURCE1, MASK_TESTSOURCE1, match_opcode, 0 },\n' in content)
+        self.assertTrue('{"testsource2",  "I",  "d,s,j", MATCH_TESTSOURCE2, MASK_TESTSOURCE2, match_opcode, 0 },\n' in content)
+        self.assertTrue('{"testsource",  "I",  "d,s,j", MATCH_TESTSOURCE, MASK_TESTSOURCE, match_opcode, 0 },\n' in content)
+
+    def testExtendSourceAddSameTwice(self):
+        # should only occure once in source file
+        name = 'testsource'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser1 = Parser(args)
+        parser1.opcc = self.opcsource
+        parser1.parse_models()
+        parser1.extend_source()
+
+        name = 'testsource'
+        filename = self.folderpath + name + '.cc'
+        self.genModel(name, filename)
+
+        args = self.Args(filename)
+        parser2 = Parser(args)
+        parser2.opcc = self.opcsource
+        parser2.parse_models()
+        parser2.extend_source()
+
+        with open(self.opcsource, 'r') as fh:
+            content = fh.readlines()
+
+        self.assertEqual(len(content), 7)
