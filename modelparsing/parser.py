@@ -474,9 +474,10 @@ class Parser:
 
         # header file that needs to be edited
         self.opch = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), ('../riscv-gnu-toolchain/' +
-                                          'riscv-binutils-gdb/include/opcode/riscv-opc.h'
-                                          ))
+            os.path.realpath(__file__)),
+            ('../riscv-gnu-toolchain/' +
+             'riscv-binutils-gdb/include/opcode/riscv-opc.h'
+             ))
         # custom opc.h file
         self.opch_cust = os.path.join(os.path.dirname(
             os.path.realpath(__file__)), '../riscv-gnu-toolchain/' +
@@ -636,10 +637,17 @@ class Parser:
             with open(opchold, 'w') as fh:
                 fh.write(content)
 
-        # at first, we create our own custom opc header file
-        # write file
-        with open(self.opch_cust, 'w') as fh:
-            fh.write(self._exts.cust_header)
+        # check if we simply want to include a whole directory
+        # if so, create a new custom header
+        # if not (single file), we extend an existing header if avail
+        if self._isfile and os.path.exists(self.opch_cust):
+            pass
+        else:
+            # we include a whole directory
+            # at first, we create our own custom opc header file
+            # write file
+            with open(self.opch_cust, 'w') as fh:
+                fh.write(self._exts.cust_header)
 
         # write the include statement for our custom header
         if '#include "riscv-custom-opc.h"\n' not in content:
