@@ -24,7 +24,7 @@
  *  
  */
 
-#include "test.hh"
+#include "mod.hh"
 
 uint8_t opc    = 0x02;  // opc, 5 bits
 uint8_t funct3 = 0x00;  // funct3, 3 bits
