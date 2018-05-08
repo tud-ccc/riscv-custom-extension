@@ -567,6 +567,8 @@ class Parser:
         logger.info('Determine if modelpath is a folder or a single file')
         self._isfile = False
         if os.path.isdir(self._args.modelpath):
+            # restore the toolchain to its defaults
+            self.restore()
             logger.info('Traverse over directory')
             self.treewalk(self._args.modelpath)
         else:
@@ -680,6 +682,10 @@ class Parser:
             # build string that has to be added to the content of the file
             dfn = '{{"{}",  "I",  "{}", {}, {}, match_opcode, 0 }},\n'.format(
                 inst.name, inst.operands, inst.matchname, inst.maskname)
+
+            if dfn in content:
+                logger.warn('Instruction already taken, skip')
+                continue
 
             # we simply add the instruction right before the termination of the
             # list in riscv-opc.c

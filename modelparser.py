@@ -81,6 +81,7 @@ def main():
         modelparser.parse_models()
         # extend compiler with models
         modelparser.extend_compiler()
+        # extend gem5
 
     # modelparser.remove_models()
 
