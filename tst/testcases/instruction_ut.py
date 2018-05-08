@@ -2,7 +2,7 @@ import sys
 import unittest
 
 sys.path.append('..')
-from modelparsing.parser import Instruction
+from modelparsing.instruction import Instruction
 sys.path.remove('..')
 
 
