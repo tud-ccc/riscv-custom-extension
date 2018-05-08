@@ -11,7 +11,12 @@ class Decoder:
     '''
     def __init__(self, models):
         self._models = models
+        self._defn = ''
 
     @property
     def models(self):
         return self._models
+
+    @property
+    def defn(self):
+        return self._defn
