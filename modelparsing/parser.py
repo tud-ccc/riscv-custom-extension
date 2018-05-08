@@ -439,7 +439,6 @@ class Extensions:
         self._rv_opc_header, err = p.communicate(input=opcodes)
 
         try:
-            logger.error(err.rstrip())
             os.remove(opc_cust)
         except OSError:
             pass

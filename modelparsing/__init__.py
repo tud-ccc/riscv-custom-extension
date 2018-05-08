@@ -18,8 +18,12 @@ else:
     (name, version, code) = ('n/a', 'n/a', 'n/a')
 
 if name == 'Ubuntu':
-    clang.cindex.Config.set_library_file(
-        '/usr/lib/llvm-4.0/lib/libclang-4.0.so')
+    if version == '16.04':
+        clang.cindex.Config.set_library_file(
+            '/usr/lib/llvm-3.8/lib/libclang-3.8.so')
+    else:
+        clang.cindex.Config.set_library_file(
+            '/usr/lib/llvm-4.0/lib/libclang-4.0.so')
 elif name == 'CentOS Linux':
     clang.cindex.Config.set_library_file('/usr/lib64/llvm/libclang.so')
 else:

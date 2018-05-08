@@ -3,6 +3,14 @@ RISC-V Extension Repo
 
 This repository is used to develop extensions for the RISC-V ISA.
 
+## Prerequisites
+
+on Ubuntu:
+*  clang-4.0
+*  python2
+*  libclang-dev
+*  pip install https://pypi.python.org/packages/source/c/clang/clang-3.8.tar.gz
+
 ## Usage
 usage: modelparser [-h] [-v] [-b] [-m MODEL]
 
