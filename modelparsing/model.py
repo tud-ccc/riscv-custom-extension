@@ -1,0 +1,207 @@
+import clang.cindex
+import logging
+import subprocess
+
+from exceptions import ConsistencyError
+
+logger = logging.getLogger(__name__)
+
+
+class Model:
+    '''
+    C++ Reference of the custom instruction.
+    '''
+
+    def __init__(self, impl):
+        '''
+        Init method, that takes the location of
+        the implementation as an argument.
+        '''
+
+        logger.info("Using libclang at %s" % clang.cindex.Config.library_file)
+
+        self.compile_model(impl)
+
+        index = clang.cindex.Index.create()
+        tu = index.parse(impl, ['-x', 'c++', '-c', '-std=c++11'])
+
+        # information to retrieve form model
+        self._dfn = ''              # definition
+        self._form = ''             # format
+        self._funct3 = 0xff         # funct3 bit field
+        self._funct7 = 0xff         # funct7 bit field
+        self._name = ''             # name
+        self._opc = 0x0             # opcode
+        # model consistency checks
+        self._check_rd = False      # check if rd is defined
+        self._check_rs1 = False     # check if rs1 is defined
+        self._check_op2 = False
+        self._rettype = ''
+
+        logger.info("Parsing model @ %s" % impl)
+
+        self.parse_model(tu.cursor)
+        self.check_consistency()
+
+    def compile_model(self, file):
+        logger.info('Compile model {}'.format(file))
+        p = subprocess.Popen([r'g++',
+                              '-fsyntax-only',
+                              '-Wall',
+                              '-std=c++11',
+                              '-c',
+                              file],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        (_, ret) = p.communicate()
+
+        if ret:
+            logger.error(ret)
+            raise ConsistencyError(file, 'Compile error.')
+
+    def parse_model(self, node):
+        '''
+        Parse the model and search for all necessary information.
+        '''
+        for child in node.get_children():
+            self.parse_model(child)
+
+        # only set name if it's unset
+        # due to parsing of included header the function definition occures
+        # twice
+        if node.kind == clang.cindex.CursorKind.FUNCTION_DECL \
+                and self._name == '':
+            # save name
+            self._name = node.spelling
+            # save rettype for consistency check
+            self._rettype = list(node.get_tokens())[0].spelling
+            logger.info("Function name: {}".format(self._name))
+
+        if node.kind == clang.cindex.CursorKind.COMPOUND_STMT:
+            logger.info("Model definition found")
+            self.extract_definition(node)
+
+        if node.kind == clang.cindex.CursorKind.VAR_DECL:
+            # process all variable declarations
+            # opcode
+            if node.spelling == 'opc':
+                logger.info('Model opcode found')
+                self._opc = self.extract_value(node)
+            # funct3 bitfield
+            if node.spelling == 'funct3':
+                logger.info('Model funct3 found')
+                self._funct3 = self.extract_value(node)
+            # funct7 bitfield, only for R-Type
+            if node.spelling == 'funct7':
+                logger.info('Model funct7 found')
+                self._funct7 = self.extract_value(node)
+
+        if node.kind == clang.cindex.CursorKind.PARM_DECL:
+            # process all parameter declarations
+            # check if Rd and Rs1 exists
+            if node.spelling.startswith('Rd'):
+                self._check_rd = True
+            if node.spelling.startswith('Rs1'):
+                self._check_rs1 = True
+
+            # determine, if function is R-Type or I-Type
+            if node.spelling.startswith('Rs2'):
+                logger.info('Model is of format R-Type')
+                self._form = 'R'
+                self._check_op2 = True
+            if node.spelling.startswith('imm'):
+                logger.info('Model is of format I-Type')
+                self._form = 'I'
+                self._check_op2 = True
+
+    def extract_definition(self, node):
+        '''
+        Extract a function definition.
+        '''
+        filename = node.location.file.name
+        with open(filename, 'r') as fh:
+            contents = fh.read()
+
+        self._dfn = contents[node.extent.start.offset: node.extent.end.offset]
+
+        logger.info("Definintion in {} @ line {}".format(
+            filename, node.location.line))
+        logger.debug('Definition:\n%s' % self._dfn)
+
+    def extract_value(self, node):
+        '''
+        Extract a variable value.
+        '''
+        for entry in list(node.get_tokens()):
+            if entry.spelling[0].isdigit():
+                logger.info('Value: %s' % entry.spelling)
+                return int(entry.spelling, 0)
+
+    def check_consistency(self):
+        '''
+        Check whether a model fulfills all consistency requirements.
+        '''
+        logger.info('Check consistency of model definition')
+
+        # check function definition
+        # does rd and rs1 exist?
+        # both are required for R and I type
+        if not self._check_rd:
+            raise ConsistencyError(
+                self._check_rd, 'Model definition requires parameter Rd')
+        if not self._check_rs1:
+            raise ConsistencyError(
+                self._check_rs1, 'Model definition requires parameter Rs1')
+        # check if operand 2 was defined
+        if not self._check_op2:
+            raise ConsistencyError(
+                self._check_op2, 'Model definition requires parameter Op2')
+
+        # check return type of function
+        if not self._rettype == 'void':
+            raise ConsistencyError(
+                self._rettype, 'Function has to be of type void.')
+
+        if self._opc not in [0x02, 0x0a, 0x16, 0x1e]:
+            raise ValueError(self._opc, 'Invalid opcode.')
+
+        # funct3 --> 3 bits
+        if self._funct3 > 0x7:
+            raise ValueError(self._funct3, 'Invalid funct3.')
+        # funct7 --> 7 bits
+        if self._form == 'R' and self._funct7 > 0x7f:
+            raise ValueError(self._funct7, 'Invalid funct7.')
+
+        # does the definition starts and end with a bracket
+        if not self._dfn.startswith('{'):
+            raise ConsistencyError(
+                self._dfn, 'Function definition not found.')
+        if not self._dfn.endswith('}'):
+            raise ConsistencyError(
+                self._dfn, 'Closing bracket missing.')
+
+        logger.info('Model meets requirements')
+
+    @property
+    def definition(self):
+        return self._dfn
+
+    @property
+    def form(self):
+        return self._form
+
+    @property
+    def funct3(self):
+        return self._funct3
+
+    @property
+    def funct7(self):
+        return self._funct7
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def opc(self):
+        return self._opc

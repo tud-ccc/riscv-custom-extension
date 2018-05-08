@@ -9,7 +9,8 @@ on Ubuntu:
 *  clang-4.0
 *  python2
 *  libclang-dev
-*  pip install https://pypi.python.org/packages/source/c/clang/clang-3.8.tar.gz
+*  make sure to have the clang lib and clang python bindings in sync, same version
+	*  pip install https://pypi.python.org/packages/source/c/clang/clang-3.8.tar.gz
 
 ## Usage
 usage: modelparser [-h] [-v] [-b] [-m MODEL]
