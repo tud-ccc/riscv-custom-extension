@@ -253,6 +253,12 @@ class Parser:
             content = ''.join(content)
             fh.write(content)
 
+    def extend_gem5(self):
+        '''
+        Extend the gem5 decoder. Therefore a new pice of decoder is needed.
+        '''
+        pass
+
     @property
     def args(self):
         return self._args
