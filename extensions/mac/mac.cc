@@ -16,11 +16,6 @@
  * I-Type  [Register - Immediate]
  * void fname(uint Rd, uint Rs1, uint imm)
  *
- * S-Type [Store]
- * void fname(uint Rs1, uint Rs2, uint imm)
- *
- * U-Type [Upper Immediate]
- * void fname(uint Rd, uint imm)
  *  
  */
 
@@ -31,10 +26,11 @@ uint8_t funct3 = 0x00;  // funct3, 3 bits
 uint8_t funct7 = 0x00;  // funct7, 7 bits
 
 void mac(
-    uint32_t Rd_uw,
-    uint32_t Rs1_uw,
-    uint32_t Rs2_uw
+    uint32_t Rd,
+    uint32_t Rs1,
+    uint32_t Rs2
 )
 {
-    // function definition
+    uint32_t tmp = Rs1 * Rs2;
+    Rd = Rd + tmp;
 }

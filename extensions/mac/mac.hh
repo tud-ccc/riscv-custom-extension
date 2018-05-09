@@ -26,4 +26,4 @@
 
 #include <cstdint>
 
-void mac(uint32_t Rd_uw, uint32_t Rs1_uw, uint32_t Rs2_uw);
+void mac(uint32_t Rd, uint32_t Rs1, uint32_t Rs2);
