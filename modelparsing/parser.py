@@ -51,19 +51,23 @@ class Parser:
         self._insts = []
 
         # header file that needs to be edited
-        self.opch = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)),
-            ('../riscv-gnu-toolchain/' +
-             'riscv-binutils-gdb/include/opcode/riscv-opc.h'
-             ))
+        self.opch = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                '../riscv-gnu-toolchain/',
+                'riscv-binutils-gdb/include/opcode/riscv-opc.h'))
         # custom opc.h file
-        self.opch_cust = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '../riscv-gnu-toolchain/' +
-            'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h')
+        self.opch_cust = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                '../riscv-gnu-toolchain/',
+                'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h'))
         # c source file that needs to be edited
-        self.opcc = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '../riscv-gnu-toolchain/' +
-            'riscv-binutils-gdb/opcodes/riscv-opc.c')
+        self.opcc = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                '../riscv-gnu-toolchain/',
+                'riscv-binutils-gdb/opcodes/riscv-opc.c'))
 
         assert os.path.exists(self.opch)
         assert os.path.exists(os.path.dirname(self.opch_cust))
@@ -288,6 +292,7 @@ class Parser:
         '''
         self._decoder = Decoder(self._models)
         self._decoder.gen_decoder()
+        self._decoder.patch_gem5()
 
     @property
     def args(self):

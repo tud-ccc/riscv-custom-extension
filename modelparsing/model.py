@@ -106,22 +106,21 @@ class Model:
             logger.info("Function name: {}".format(self._name))
 
         if node.kind == clang.cindex.CursorKind.COMPOUND_STMT:
-            logger.info("Model definition found")
             self.extract_definition(node)
 
         if node.kind == clang.cindex.CursorKind.VAR_DECL:
             # process all variable declarations
             # opcode
             if node.spelling == 'opc':
-                logger.info('Model opcode found')
+                logger.debug('Model opcode:')
                 self._opc = self.extract_value(node)
             # funct3 bitfield
             if node.spelling == 'funct3':
-                logger.info('Model funct3 found')
+                logger.debug('Model funct3:')
                 self._funct3 = self.extract_value(node)
             # funct7 bitfield, only for R-Type
             if node.spelling == 'funct7':
-                logger.info('Model funct7 found')
+                logger.debug('Model funct7:')
                 self._funct7 = self.extract_value(node)
 
         if node.kind == clang.cindex.CursorKind.PARM_DECL:
@@ -134,11 +133,11 @@ class Model:
 
             # determine, if function is R-Type or I-Type
             if node.spelling.startswith('Rs2'):
-                logger.info('Model is of format R-Type')
+                logger.debug('Model is of format R-Type')
                 self._form = 'R'
                 self._check_op2 = True
             if node.spelling.startswith('imm'):
-                logger.info('Model is of format I-Type')
+                logger.debug('Model is of format I-Type')
                 self._form = 'I'
                 self._check_op2 = True
 
@@ -162,7 +161,7 @@ class Model:
         '''
         for entry in list(node.get_tokens()):
             if entry.spelling[0].isdigit():
-                logger.info('Value: %s' % entry.spelling)
+                logger.debug('Value: %s' % entry.spelling)
                 return int(entry.spelling, 0)
 
     def check_consistency(self):

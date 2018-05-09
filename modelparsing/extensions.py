@@ -75,7 +75,6 @@ class Extensions:
         # Therefore we do the check here, instead of checking it while adding
         # the model. This way the tests doesn't have to be adapted, once the
         # script is patched.
-        logger.info('Checking if opcodes overlap')
         logger.debug('{} {}'.format(inst.name, inst.form))
         for inst2 in self._insts:
             if inst2.name == inst.name:
@@ -189,6 +188,7 @@ Format not supported.
             self._insts.append(inst)
 
         # check opcodes for not captured errors
+        logger.info('Checking if opcodes overlap')
         for inst in self._insts:
             self.check_opcodes(inst)
 

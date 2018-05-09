@@ -45,8 +45,11 @@ class Decoder:
         self._models = models
         self._decoder = ''
 
-        self._dec_templ = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), 'decoder.mako')
+        self._gem5_rv32isa = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                '../../../src/arch/riscv/isa/decoder/rv32.isa'))
+        assert os.path.exists(self._gem5_rv32isa)
 
     def gen_decoder(self):
         # iterate of all custom extensions and generate a custom decoder
@@ -93,6 +96,16 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
 % endfor""")
 
         self._decoder = dec_templ.render(models=self._models)
+        logger.debug('custom decoder: \n' + self._decoder)
+
+    def patch_gem5(self):
+        # patch the gem5 isa decoder
+        # for now: always choose rv32.isa
+        logger.info("Patch the gem5 isa file " + self._gem5_rv32isa)
+        with open(self._gem5_rv32isa, 'r') as fh:
+            rv32isa = fh.readlines()
+
+        print(rv32isa)
 
     @property
     def models(self):

@@ -26,6 +26,7 @@ optional arguments:
 ## Structure
 The project is structured as follows:
 
-*  parser/  -  contains model parsing facilities
+*  modelparsing/  -  contains model parsing facilities
 *  tst/  -  contains unit test for parser modules
-
+*  extensions/  -  default place, where extension models should be defined
+*  riscv-opcodes/  -  the riscv opcodes generator project, used by this project
