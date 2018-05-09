@@ -125,17 +125,6 @@ Format not supported.
 <% return STOP_RENDERING %>
 %endif
 % endfor""")
-        # # opcodes custom is the file, that was generated
-        # opc_cust = os.path.join(os.path.dirname(
-        #     os.path.realpath(__file__)), 'opcodes-custom')
-        # self._rv_opc_files.append(opc_cust)
-
-        # # render custom opcodes template
-        # with open(opc_cust, 'w') as fh:
-        #     fh.write(opcodes_cust.render(operations=self._models))
-
-        # with open(opc_cust, 'r') as fh:
-        #     content = fh.read()
 
         content = opcodes_cust.render(operations=self._models)
 
@@ -191,26 +180,6 @@ Format not supported.
         logger.info('Checking if opcodes overlap')
         for inst in self._insts:
             self.check_opcodes(inst)
-
-        # # join the content of all opcode files
-        # # used to generate a single riscv-opc.h containing all operations
-        # opcodes = ''.join([open(f).read() for f in self._rv_opc_files])
-
-        # p = subprocess.Popen([self._rv_opc_parser,
-        #                       '-c'],
-        #                      stdin=subprocess.PIPE,
-        #                      stdout=subprocess.PIPE,
-        #                      stderr=subprocess.PIPE)
-        # # for now just save the output string, used later
-        # self._rv_opc_header, err = p.communicate(input=opcodes)
-
-        # try:
-        #     os.remove(opc_cust)
-        # except OSError:
-        #     pass
-
-        # if not self._rv_opc_header or err:
-        #     raise OpcodeError('Function opcode could not be generated')
 
     @property
     def models(self):

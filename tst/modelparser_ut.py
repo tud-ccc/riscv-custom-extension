@@ -28,6 +28,7 @@
 #
 # Authors: Robert Scheffel
 
+from testcases import compiler_ut
 from testcases import decoder_ut
 from testcases import extensions_ut
 from testcases import instruction_ut
@@ -40,6 +41,8 @@ import unittest
 if __name__ == '__main__':
     # load test cases
     suiteList = []
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        compiler_ut.TestCompiler))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
         decoder_ut.TestDecoder))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
