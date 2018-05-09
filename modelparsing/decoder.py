@@ -103,9 +103,24 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
         # for now: always choose rv32.isa
         logger.info("Patch the gem5 isa file " + self._gem5_rv32isa)
         with open(self._gem5_rv32isa, 'r') as fh:
-            rv32isa = fh.readlines()
+            content = fh.readlines()
 
-        print(rv32isa)
+        # if not existing
+        # copy the old .isa file
+        gem5_isa_old = self._gem5_rv32isa + '_old'
+        if not os.path.exists(gem5_isa_old):
+            logger.info('Copy original {}'.format(self._gem5_rv32isa))
+            with open(gem5_isa_old, 'w') as fh:
+                data = ''.join(content)
+                fh.write(data)
+
+        line = len(content) - 2
+        content.insert(line, self._decoder)
+
+        # write back modified content
+        with open(self._gem5_rv32isa, 'w') as fh:
+            content = ''.join(content)
+            fh.write(content)
 
     @property
     def models(self):
