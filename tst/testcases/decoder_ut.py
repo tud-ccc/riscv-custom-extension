@@ -49,19 +49,24 @@ class TestDecoder(unittest.TestCase):
         self.form = 'I'
         self.opc = 0x02
         self.funct3 = 0x00
-        self.definition = '{ test }'
+        self.definition = '''{
+    test;
+}'''
 
     def testITypeDecoder(self):
         # test a simple decoder generation for an i type operation
         name = 'itype'
-
         models = [self.Model(name, self.form, self.opc,
                              self.funct3, self.definition)]
         decoder = Decoder(models)
+        decoder.gen_decoder()
 
         expect = '''\
-0x02: I32Op::itype({{
+0x2: decode FUNCT3 {
+0x0: I32Op::itype({{
     test;
-}}, uint32_t);'''
+}}, uint32_t);
+}
+'''
 
-        self.assertEqual(decoder.defn, expect)
+        self.assertEqual(decoder.decoder, expect)

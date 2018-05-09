@@ -86,18 +86,31 @@ class Extensions:
         logger.info('Generate instructions from operations')
         # use a mako template to generate files, that are equal to the ones
         # in the riscv-opcodes project
-        opcodes_cust = Template(filename=self._opc_templ)
-        # opcodes custom is the file, that was generated
-        opc_cust = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), 'opcodes-custom')
-        self._rv_opc_files.append(opc_cust)
+        opcodes_cust = Template(r"""<%
+%>\
+% for operation in operations:
+% if operation.form == 'R':
+${operation.name} rd rs1 rs2 31..25=${operation.funct7} 14..12=${operation.funct3} 6..2=${operation.opc} 1..0=3
+% elif operation.form == 'I':
+${operation.name} rd rs1 imm12 14..12=${operation.funct3} 6..2=${operation.opc} 1..0=3
+% else:
+Format not supported.
+<% return STOP_RENDERING %>
+%endif
+% endfor""")
+        # # opcodes custom is the file, that was generated
+        # opc_cust = os.path.join(os.path.dirname(
+        #     os.path.realpath(__file__)), 'opcodes-custom')
+        # self._rv_opc_files.append(opc_cust)
 
-        # render custom opcodes template
-        with open(opc_cust, 'w') as fh:
-            fh.write(opcodes_cust.render(operations=self._models))
+        # # render custom opcodes template
+        # with open(opc_cust, 'w') as fh:
+        #     fh.write(opcodes_cust.render(operations=self._models))
 
-        with open(opc_cust, 'r') as fh:
-            content = fh.read()
+        # with open(opc_cust, 'r') as fh:
+        #     content = fh.read()
+
+        content = opcodes_cust.render(operations=self._models)
 
         # start parse_opcodes script with our custom instructions
         p = subprocess.Popen([self._rv_opc_parser,
@@ -109,11 +122,11 @@ class Extensions:
 
         if not defines or err:
             # an error occured
+            # try:
+            #     os.remove(opc_cust)
+            # except OSError:
+            #     pass
             logger.error(err.rstrip())
-            try:
-                os.remove(opc_cust)
-            except OSError:
-                pass
             raise OpcodeError('Function opcode could not be generated')
 
         # adapt the defines
@@ -151,25 +164,25 @@ class Extensions:
         for inst in self._insts:
             self.check_opcodes(inst)
 
-        # join the content of all opcode files
-        # used to generate a single riscv-opc.h containing all operations
-        opcodes = ''.join([open(f).read() for f in self._rv_opc_files])
+        # # join the content of all opcode files
+        # # used to generate a single riscv-opc.h containing all operations
+        # opcodes = ''.join([open(f).read() for f in self._rv_opc_files])
 
-        p = subprocess.Popen([self._rv_opc_parser,
-                              '-c'],
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        # for now just save the output string, used later
-        self._rv_opc_header, err = p.communicate(input=opcodes)
+        # p = subprocess.Popen([self._rv_opc_parser,
+        #                       '-c'],
+        #                      stdin=subprocess.PIPE,
+        #                      stdout=subprocess.PIPE,
+        #                      stderr=subprocess.PIPE)
+        # # for now just save the output string, used later
+        # self._rv_opc_header, err = p.communicate(input=opcodes)
 
-        try:
-            os.remove(opc_cust)
-        except OSError:
-            pass
+        # try:
+        #     os.remove(opc_cust)
+        # except OSError:
+        #     pass
 
-        if not self._rv_opc_header or err:
-            raise OpcodeError('Function opcode could not be generated')
+        # if not self._rv_opc_header or err:
+        #     raise OpcodeError('Function opcode could not be generated')
 
     @property
     def models(self):

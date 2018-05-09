@@ -36,4 +36,5 @@ void mac(
     uint32_t Rs2_uw
 )
 {
+    // function definition
 }

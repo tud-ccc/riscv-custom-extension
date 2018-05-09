@@ -3,6 +3,7 @@ import os
 
 from stat import *
 
+from decoder import Decoder
 from extensions import Extensions
 from model import Model
 
@@ -257,7 +258,8 @@ class Parser:
         '''
         Extend the gem5 decoder. Therefore a new pice of decoder is needed.
         '''
-        pass
+        self._decoder = Decoder(self._models)
+        self._decoder.gen_decoder()
 
     @property
     def args(self):
