@@ -122,6 +122,14 @@ class Parser:
         return self._args
 
     @property
+    def compiler(self):
+        return self._compiler
+
+    @property
+    def decoder(self):
+        return self._decoder
+
+    @property
     def extensions(self):
         return self._exts
 
