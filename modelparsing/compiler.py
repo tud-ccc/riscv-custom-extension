@@ -38,26 +38,23 @@ class Compiler:
     the riscv compiler
     '''
 
-    def __init__(self, exts):
+    def __init__(self, exts, args):
         self._exts = exts
 
         # header file that needs to be edited
         self.opch = os.path.abspath(
             os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                '../riscv-gnu-toolchain/',
+                args.toolchain,
                 'riscv-binutils-gdb/include/opcode/riscv-opc.h'))
         # custom opc.h file
         self.opch_cust = os.path.abspath(
             os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                '../riscv-gnu-toolchain/',
+                args.toolchain,
                 'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h'))
         # c source file that needs to be edited
         self.opcc = os.path.abspath(
             os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                '../riscv-gnu-toolchain/',
+                args.toolchain,
                 'riscv-binutils-gdb/opcodes/riscv-opc.c'))
 
         assert os.path.exists(self.opch)
@@ -224,3 +221,11 @@ class Compiler:
         with open(self.opcc, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
+
+    @property
+    def exts(self):
+        return self._exts
+
+    @exts.setter
+    def exts(self, exts):
+        self._exts = exts

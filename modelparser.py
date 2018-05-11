@@ -73,21 +73,11 @@ def main():
         description='Parse reference implementations of custom extension ' +
         'models.')
 
-    parser.add_argument('-v',
-                        '--verbose',
-                        default=0,
-                        action='count',
-                        help='Increase output verbosity.')
     parser.add_argument('-b',
                         '--build',
                         action='store_true',
                         help='If set, the toolchain and Gem5 will be ' +
                         'rebuild.')
-    parser.add_argument('-r',
-                        '--restore',
-                        action='store_true',
-                        help='If set, the toolchain will be restored ' +
-                        'to its default.')
     parser.add_argument('-m',
                         '--modelpath',
                         type=str,
@@ -96,6 +86,21 @@ def main():
                             'extensions'),
                         help='Path to model definition. ' +
                         'Can be a folder or a single file.')
+    parser.add_argument('-r',
+                        '--restore',
+                        action='store_true',
+                        help='If set, the toolchain will be restored ' +
+                        'to its default.')
+    parser.add_argument('-t',
+                        '--toolchain',
+                        default=os.path.join(
+                            os.path.expanduser("~"),
+                            'projects/riscv-gnu-toolchain'))
+    parser.add_argument('-v',
+                        '--verbose',
+                        default=0,
+                        action='count',
+                        help='Increase output verbosity.')
 
     args = parser.parse_args()
     set_log_level_from_verbose(args)

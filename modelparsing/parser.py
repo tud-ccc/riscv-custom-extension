@@ -50,7 +50,7 @@ class Parser:
         self._models = []
         self._exts = None
         self._decoder = Decoder([])
-        self._compiler = Compiler([])
+        self._compiler = None
 
     def restore(self):
         '''
@@ -58,6 +58,7 @@ class Parser:
         '''
 
         logger.info('Remove custom instructions from GNU binutils files')
+        self._compiler = Compiler(None, self._args)
         self._compiler.restore()
 
     def parse_models(self):
@@ -106,7 +107,7 @@ class Parser:
         Extend the riscv compiler.
         '''
 
-        self._compiler = Compiler(self._exts)
+        self._compiler = Compiler(self._exts, self._args)
         self._compiler.extend_compiler()
 
     def extend_gem5(self):
