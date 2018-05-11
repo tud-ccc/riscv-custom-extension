@@ -45,11 +45,37 @@ class Decoder:
         self._models = models
         self._decoder = ''
 
-        self._gem5_rv32isa = os.path.abspath(
+        self._isa_decoder = os.path.abspath(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 '../../../src/arch/riscv/isa/decoder/rv32.isa'))
-        assert os.path.exists(self._gem5_rv32isa)
+        assert os.path.exists(self._isa_decoder)
+
+    def restore(self):
+        '''
+        Remove the custom extensions from the isa decoder.
+        Restore the saved decoder.
+        '''
+        logger.info('Restore original ISA decoder.')
+        decoder_old = self._isa_decoder + '_old'
+        if os.path.exists(decoder_old):
+            logger.info('Restore contents from file {}'.format(decoder_old))
+
+            with open(decoder_old, 'r') as fh:
+                content = fh.read()
+
+            with open(self._isa_decoder, 'w') as fh:
+                fh.write(content)
+
+            logger.info('Original decoder restored')
+
+            try:
+                logger.info('Remove {} from system'.format(decoder_old))
+                os.remove(decoder_old)
+            except OSError:
+                pass
+        else:
+            logger.info('Nothing to do')
 
     def gen_decoder(self):
         # iterate of all custom extensions and generate a custom decoder
@@ -101,15 +127,15 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
     def patch_gem5(self):
         # patch the gem5 isa decoder
         # for now: always choose rv32.isa
-        logger.info("Patch the gem5 isa file " + self._gem5_rv32isa)
-        with open(self._gem5_rv32isa, 'r') as fh:
+        logger.info("Patch the gem5 isa file " + self._isa_decoder)
+        with open(self._isa_decoder, 'r') as fh:
             content = fh.readlines()
 
         # if not existing
         # copy the old .isa file
-        gem5_isa_old = self._gem5_rv32isa + '_old'
+        gem5_isa_old = self._isa_decoder + '_old'
         if not os.path.exists(gem5_isa_old):
-            logger.info('Copy original {}'.format(self._gem5_rv32isa))
+            logger.info('Copy original {}'.format(self._isa_decoder))
             with open(gem5_isa_old, 'w') as fh:
                 data = ''.join(content)
                 fh.write(data)
@@ -118,7 +144,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
         content.insert(line, self._decoder)
 
         # write back modified content
-        with open(self._gem5_rv32isa, 'w') as fh:
+        with open(self._isa_decoder, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
 

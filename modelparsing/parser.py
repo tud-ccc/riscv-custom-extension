@@ -60,6 +60,7 @@ class Parser:
         logger.info('Remove custom instructions from GNU binutils files')
         self._compiler = Compiler(None, self._args)
         self._compiler.restore()
+        self._decoder.restore()
 
     def parse_models(self):
         '''
