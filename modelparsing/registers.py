@@ -56,9 +56,18 @@ class Registers:
             content = fh.readlines()
 
         regs = []
-        prog = re.compile(r"^[#].*")
+        prog = re.compile(r"^[#]define\s([0-9a-zA-Z]+)\s(0x[0-9a-fA-F]{8})")
 
         for line in content:
             match = prog.match(line)
             if match:
                 regs.append(match)
+
+        self._regmap = {}
+
+        for match in regs:
+            self._regmap[match.group(1)] = match.group(2)
+
+    @property
+    def regmap(self):
+        return self._regmap
