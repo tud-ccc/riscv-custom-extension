@@ -35,6 +35,7 @@ from compiler import Compiler
 from decoder import Decoder
 from extensions import Extensions
 from model import Model
+from registers import Registers
 
 logger = logging.getLogger(__name__)
 
@@ -95,10 +96,14 @@ class Parser:
                 # file
                 if pathname.endswith('.cc'):
                     logger.info(
-                        'Found model definition in file {}'.format(pathname))
+                        'Model definition in file {}'.format(pathname))
                     model = Model(pathname)
 
                     self._models.append(model)
+                # registers
+                if pathname.endswith('registers.hh'):
+                    logger.info('Custom registers in file {}'.format(pathname))
+                    self._registers = Registers(pathname)
             else:
                 # unknown file type
                 logger.info('Unknown file type, skip')
