@@ -103,7 +103,7 @@ class Parser:
                 # registers
                 if pathname.endswith('registers.hh'):
                     logger.info('Custom registers in file {}'.format(pathname))
-                    self._registers = Registers(pathname)
+                    self._regs = Registers(pathname)
             else:
                 # unknown file type
                 logger.info('Unknown file type, skip')
@@ -121,8 +121,7 @@ class Parser:
         Extend the gem5 decoder.
         '''
         self._decoder = Decoder(self._models)
-        self._decoder.gen_decoder()
-        self._decoder.patch_gem5()
+        self._decoder.extend_decoder()
 
     @property
     def args(self):
@@ -143,3 +142,7 @@ class Parser:
     @property
     def models(self):
         return self._models
+
+    @property
+    def regs(self):
+        return self._regs

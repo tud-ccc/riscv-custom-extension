@@ -77,6 +77,14 @@ class Decoder:
         else:
             logger.info('Nothing to do')
 
+    def extend_decoder(self):
+        '''
+        Calls the functions to generate a custom decoder and
+        patch the necessary files in gem5.
+        '''
+        self.gen_decoder()
+        self.patch_gem5()
+
     def gen_decoder(self):
         # iterate of all custom extensions and generate a custom decoder
         # first sort models:

@@ -43,6 +43,16 @@ class TestCompiler(unittest.TestCase):
     Unit tests for the Compiler class and its functions.
     '''
 
+    class Args():
+
+        def __init__(self):
+            self._tc = os.path.join(os.path.expanduser('~'),
+                                    'projects/riscv-gnu-toolchain')
+
+        @property
+        def toolchain(self):
+            return self._tc
+
     class Extensions():
 
         def __init__(self, mdls, insts, hdr):
@@ -162,6 +172,8 @@ class TestCompiler(unittest.TestCase):
                      '{0, 0, 0, 0, 0, 0, 0}\n' +
                      '};')
 
+        self.args = self.Args()
+
     def tearDown(self):
         # remove generated file
         if hasattr(self, '_outcome'):  # Python 3.4+
@@ -187,7 +199,7 @@ class TestCompiler(unittest.TestCase):
     def testExtendHeaderCopyOld(self):
         # insert a function (do not care if correctly added or not)
         # and check if old header was copied and stored correctly
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opch = self.opcheader
         compiler.opch_cust = self.opcheader_cust
         compiler.extend_header()
@@ -210,7 +222,7 @@ class TestCompiler(unittest.TestCase):
 
     def testExtendHeaderRestoreOldHeader(self):
         # try restoring of old header function
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opch = self.opcheader
         compiler.opch_cust = self.opcheader_cust
 
@@ -235,7 +247,7 @@ class TestCompiler(unittest.TestCase):
         # check if the files was created
         # no necessarity to have the correct content
         # that is part of the extensions class
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opch = self.opcheader
         compiler.opch_cust = self.opcheader_cust
         compiler.extend_header()
@@ -245,7 +257,7 @@ class TestCompiler(unittest.TestCase):
 
     def testExtendHeaderPatchRiscvOpcH(self):
         # check if the include statement was added correctly
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opch = self.opcheader
         compiler.opch_cust = self.opcheader_cust
         compiler.extend_header()
@@ -258,12 +270,12 @@ class TestCompiler(unittest.TestCase):
 
     def testExtendHeaderPatchRiscvOpcHMultiple(self):
         # purpose is to check if the include statement is only added once
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opch = self.opcheader
         compiler.opch_cust = self.opcheader_cust
         compiler.extend_header()
 
-        compiler1 = Compiler(self.exts)
+        compiler1 = Compiler(self.exts, self.args)
         compiler1.opch = self.opcheader
         compiler1.opch_cust = self.opcheader_cust
         compiler1.extend_header()
@@ -277,7 +289,7 @@ class TestCompiler(unittest.TestCase):
     def testExtendSourceCopyOld(self):
         # insert a function (do not care if correctly added or not)
         # and check if old opc source was copied and stored correctly
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opcc = self.opcsource
         compiler.extend_source()
 
@@ -295,7 +307,7 @@ class TestCompiler(unittest.TestCase):
 
     def testExtendSourceRestoreOldSource(self):
         # try restoring of old header function
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opcc = self.opcsource
 
         opccold = self.opcsource + '_old'
@@ -315,7 +327,7 @@ class TestCompiler(unittest.TestCase):
             self.assertNotEqual(file, opccold)
 
     def testExtendSourceIType(self):
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opcc = self.opcsource
         compiler.extend_source()
 
@@ -334,7 +346,7 @@ class TestCompiler(unittest.TestCase):
                                 'd,s,t')
         exts = self.Extensions([], [inst], 'customheader')
 
-        compiler = Compiler(exts)
+        compiler = Compiler(exts, self.args)
         compiler.opcc = self.opcsource
         compiler.extend_source()
 
@@ -366,7 +378,7 @@ class TestCompiler(unittest.TestCase):
                                  'd,s,j')
         exts = self.Extensions([], [inst, inst0, inst1, inst2], 'customheader')
 
-        compiler = Compiler(exts)
+        compiler = Compiler(exts, self.args)
         compiler.opcc = self.opcsource
         compiler.extend_source()
 
@@ -385,11 +397,11 @@ class TestCompiler(unittest.TestCase):
 
     def testExtendSourceAddSameTwice(self):
         # should only occure once in source file
-        compiler = Compiler(self.exts)
+        compiler = Compiler(self.exts, self.args)
         compiler.opcc = self.opcsource
         compiler.extend_source()
 
-        compiler1 = Compiler(self.exts)
+        compiler1 = Compiler(self.exts, self.args)
         compiler1.opcc = self.opcsource
         compiler1.extend_source()
 
