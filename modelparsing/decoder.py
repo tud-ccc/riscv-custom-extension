@@ -41,8 +41,9 @@ class Decoder:
     models.
     '''
 
-    def __init__(self, models):
+    def __init__(self, models, regs):
         self._models = models
+        self._regs = regs
         self._decoder = ''
 
         self._isa_decoder = os.path.abspath(
@@ -157,9 +158,13 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
             fh.write(content)
 
     @property
+    def decoder(self):
+        return self._decoder
+
+    @property
     def models(self):
         return self._models
 
     @property
-    def decoder(self):
-        return self._decoder
+    def regs(self):
+        return self._regs

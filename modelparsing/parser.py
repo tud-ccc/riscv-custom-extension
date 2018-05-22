@@ -120,7 +120,7 @@ class Parser:
         '''
         Extend the gem5 decoder.
         '''
-        self._decoder = Decoder(self._models)
+        self._decoder = Decoder(self._models, self._regs)
         self._decoder.extend_decoder()
 
     @property

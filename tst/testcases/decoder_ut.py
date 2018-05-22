@@ -72,21 +72,30 @@ class TestDecoder(unittest.TestCase):
         def definition(self):
             return self._definition
 
+    class Registers:
+        def __init__(self, regmap):
+            self._regmap = regmap
+
+        @property
+        def regmap(self):
+            return self._regmap
+
     def setUp(self):
         # frequently used variables
         self.form = 'I'
         self.opc = 0x02
         self.funct3 = 0x00
-        self.definition = '''{
-    test;
-}'''
+        self.definition = "{\n    test;\n}"
+
+        regmap = {'q0': 0x7000000}
+        self.regs = self.Registers(regmap)
 
     def testITypeDecoder(self):
         # test a simple decoder generation for an i type operation
         name = 'itype'
         models = [self.Model(name, self.form, self.opc,
                              self.funct3, self.definition)]
-        decoder = Decoder(models)
+        decoder = Decoder(models, self.regs)
         decoder.gen_decoder()
 
         expect = '''\
@@ -106,7 +115,7 @@ class TestDecoder(unittest.TestCase):
         models = [self.Model(name, self.form, self.opc,
                              self.funct3, self.definition, funct7)]
 
-        decoder = Decoder(models)
+        decoder = Decoder(models, self.regs)
         decoder.gen_decoder()
 
         expect = '''\
@@ -135,7 +144,7 @@ class TestDecoder(unittest.TestCase):
                   self.Model(name4, 'R', 0x16, 0x0, self.definition, 0x0),
                   self.Model(name5, 'R', 0x16, 0x0, self.definition, 0x1)]
 
-        decoder = Decoder(models)
+        decoder = Decoder(models, self.regs)
         decoder.gen_decoder()
 
         expect = '''\

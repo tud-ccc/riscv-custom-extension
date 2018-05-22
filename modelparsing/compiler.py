@@ -130,19 +130,12 @@ class Compiler:
     def extend_compiler(self):
         '''
         Calls functions to extend necessary header and c files.
-        After that, the toolchain will be rebuild.
-        Then the compiler should know the custom instructions.
+        Also creates intrinsics for access to custom registers.
         '''
 
-        # in the meantime instructions may been deletet from the list
-        # insts = extend_header(insts)
         self.extend_header()
-
-        # return value should be the same as the function parameter because in
-        # extend_headers all previously included instructions should have been
-        # removed.
-        # insts = extend_source(insts)
         self.extend_source()
+        self.extend_stdlibs()
 
     def extend_header(self):
         '''
@@ -221,6 +214,9 @@ class Compiler:
         with open(self.opcc, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
+
+    def extend_stdlibs(self):
+        pass
 
     @property
     def exts(self):
