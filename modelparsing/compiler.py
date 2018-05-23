@@ -28,6 +28,7 @@
 
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class Compiler:
     '''
 
     def __init__(self, exts, regs, args):
+        self._args = args
         self._exts = exts
         self._regs = regs
 
@@ -134,6 +136,7 @@ class Compiler:
         Also creates intrinsics for access to custom registers.
         '''
 
+        logger.info('Extending the toolchain')
         self.extend_header()
         self.extend_source()
         self.extend_stdlibs()
@@ -217,7 +220,29 @@ class Compiler:
             fh.write(content)
 
     def extend_stdlibs(self):
-        pass
+        # first: we need to find the location of the installed toolchain
+        # this is simply done by parsing the makefile in the
+        # riscv-gnu-toolchain project, which is available via args
+        tcpath = self._args.toolchain
+        mfile = os.path.join(tcpath, 'Makefile')
+
+        assert(os.path.exists(mfile))
+
+        with open(mfile, 'r') as fh:
+            content = fh.readlines()
+
+        prog = re.compile(r"^INSTALL_DIR\s:=\s([a-zA-Z0-9\W]+)")
+
+        for line in content:
+            match = prog.match(line)
+            if match:
+                break
+        instpath = match.group(1)
+        assert(os.path.exists(instpath))
+
+    @property
+    def args(self):
+        return self._args
 
     @property
     def exts(self):
