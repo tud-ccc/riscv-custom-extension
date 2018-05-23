@@ -50,7 +50,7 @@ class Parser:
         self._args = args
         self._models = []
         self._exts = None
-        self._decoder = Decoder([])
+        self._decoder = Decoder([], None)
         self._compiler = None
 
     def restore(self):
