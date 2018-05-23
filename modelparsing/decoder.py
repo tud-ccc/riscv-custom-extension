@@ -165,6 +165,14 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
     def models(self):
         return self._models
 
+    @models.setter
+    def models(self, models):
+        self._models = models
+
     @property
     def regs(self):
         return self._regs
+
+    @regs.setter
+    def regs(self, regs):
+        self._regs = regs

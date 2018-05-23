@@ -38,8 +38,9 @@ class Compiler:
     the riscv compiler
     '''
 
-    def __init__(self, exts, args):
+    def __init__(self, exts, regs, args):
         self._exts = exts
+        self._regs = regs
 
         # header file that needs to be edited
         self.opch = os.path.abspath(
@@ -225,3 +226,11 @@ class Compiler:
     @exts.setter
     def exts(self, exts):
         self._exts = exts
+
+    @property
+    def regs(self):
+        return self._regs
+
+    @regs.setter
+    def regs(self, regs):
+        self._regs = regs

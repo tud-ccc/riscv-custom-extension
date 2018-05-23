@@ -48,10 +48,10 @@ class Parser:
 
     def __init__(self, args):
         self._args = args
-        self._models = []
-        self._exts = None
+        self._compiler = Compiler(None, None, self._args)
         self._decoder = Decoder([], None)
-        self._compiler = None
+        self._exts = None
+        self._models = []
 
     def restore(self):
         '''
@@ -59,7 +59,6 @@ class Parser:
         '''
 
         logger.info('Remove custom instructions from GNU binutils files')
-        self._compiler = Compiler(None, self._args)
         self._compiler.restore()
         self._decoder.restore()
 
@@ -81,6 +80,8 @@ class Parser:
             self._models.append(model)
 
         self._exts = Extensions(self._models)
+        self._compiler = Compiler(self._exts, self._regs, self._args)
+        self._decoder = Decoder(self._models, self._regs)
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
@@ -112,15 +113,12 @@ class Parser:
         '''
         Extend the riscv compiler.
         '''
-
-        self._compiler = Compiler(self._exts, self._args)
         self._compiler.extend_compiler()
 
     def extend_gem5(self):
         '''
         Extend the gem5 decoder.
         '''
-        self._decoder = Decoder(self._models, self._regs)
         self._decoder.extend_decoder()
 
     @property
