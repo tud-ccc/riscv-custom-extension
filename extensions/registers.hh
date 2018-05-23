@@ -32,7 +32,7 @@
  * define custom register names and its addresses
  */
 
-#define c0 0x70000000
-#define c1 0x70000004
-#define c2 0x70000008
-#define c3 0x7000000c
+#define c0 0x90000000
+#define c1 0x90000004
+#define c2 0x90000008
+#define c3 0x9000000c
