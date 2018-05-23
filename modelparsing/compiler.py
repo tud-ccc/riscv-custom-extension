@@ -62,9 +62,36 @@ class Compiler:
                 args.toolchain,
                 'riscv-binutils-gdb/opcodes/riscv-opc.c'))
 
+        tcpath = self._args.toolchain
+        mfile = os.path.join(tcpath, 'Makefile')
+
+        assert(os.path.exists(mfile))
+
+        with open(mfile, 'r') as fh:
+            content = fh.readlines()
+
+        prog = re.compile(r"^INSTALL_DIR\s:=\s([\w\W]+/)([\w_-]+)")
+
+        # find the install path of the toolchain
+        # only works if toolchain was built with this project
+        # and the toolchain to be altered is the last one,
+        # that was configured
+        for line in content:
+            match = prog.match(line)
+            if match:
+                break
+        instpath = os.path.join(match.group(1), match.group(2))
+        assert(os.path.exists(instpath))
+
+        self.stdlibs = os.path.join(*[instpath,
+                                      'lib/gcc/',
+                                      'riscv32-unknown-elf',
+                                      '7.2.0/include'])
+
         assert os.path.exists(self.opch)
         assert os.path.exists(os.path.dirname(self.opch_cust))
         assert os.path.exists(self.opcc)
+        assert(os.path.exists(self.stdlibs))
 
     def restore(self):
         '''
@@ -73,6 +100,7 @@ class Compiler:
 
         self.restore_header()
         self.restore_source()
+        self.remove_stdlib()
 
     def restore_header(self):
         '''
@@ -127,6 +155,21 @@ class Compiler:
             try:
                 logger.info('Remove {} from system'.format(opccold))
                 os.remove(opccold)
+            except OSError:
+                pass
+        else:
+            logger.info('Nothing to do')
+
+    def remove_stdlib(self):
+        '''
+        Remove the added intrinsic library.
+        '''
+        logger.info('Remove intrinsic header file')
+        regsintr = os.path.join(self.stdlibs, 'regsintr.h')
+        if os.path.exists(regsintr):
+            try:
+                logger.info('Remove {} from system'.format(regsintr))
+                os.remove(regsintr)
             except OSError:
                 pass
         else:
@@ -225,32 +268,6 @@ class Compiler:
         # first: we need to find the location of the installed toolchain
         # this is simply done by parsing the makefile in the
         # riscv-gnu-toolchain project, which is available via args
-        tcpath = self._args.toolchain
-        mfile = os.path.join(tcpath, 'Makefile')
-
-        assert(os.path.exists(mfile))
-
-        with open(mfile, 'r') as fh:
-            content = fh.readlines()
-
-        prog = re.compile(r"^INSTALL_DIR\s:=\s([\w\W]+/)([\w_-]+)")
-
-        # find the install path of the toolchain
-        # only works if toolchain was built with this project
-        # and the toolchain to be altered is the last one,
-        # that was configured
-        for line in content:
-            match = prog.match(line)
-            if match:
-                break
-        instpath = os.path.join(match.group(1), match.group(2))
-        assert(os.path.exists(instpath))
-
-        stdlibs = os.path.join(*[instpath,
-                                 'lib/gcc/',
-                                 'riscv32-unknown-elf',
-                                 '7.2.0/include'])
-        assert(os.path.exists(stdlibs))
 
         # create a new file
         regsintr_templ = Template(r"""<%
@@ -309,7 +326,7 @@ void WRITE_CUST_REG(uint32_t reg, uint32_t val)
         intr_file = regsintr_templ.render(regmap=self._regs.regmap)
 
         # lets put a new file there
-        regsintr = os.path.join(stdlibs, 'regsintr.h')
+        regsintr = os.path.join(self.stdlibs, 'regsintr.h')
         logger.info("Create intrinsics file @ {}". format(regsintr))
 
         with open(regsintr, 'w') as fh:
