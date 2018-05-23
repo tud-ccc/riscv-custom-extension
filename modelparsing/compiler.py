@@ -231,13 +231,14 @@ class Compiler:
         with open(mfile, 'r') as fh:
             content = fh.readlines()
 
-        prog = re.compile(r"^INSTALL_DIR\s:=\s([a-zA-Z0-9\W]+)")
+        prog = re.compile(r"^INSTALL_DIR\s:=\s([\w\W]+/)([\w\W]+)")
 
         for line in content:
             match = prog.match(line)
             if match:
                 break
-        instpath = match.group(1)
+        instpath = os.path.join(match.group(1), match.group(2))
+        print(instpath)
         assert(os.path.exists(instpath))
 
     @property

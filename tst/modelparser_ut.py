@@ -34,6 +34,7 @@ from testcases import extensions_ut
 from testcases import instruction_ut
 from testcases import model_ut
 from testcases import parser_ut
+from testcases import registers_ut
 
 import unittest
 
@@ -53,6 +54,8 @@ if __name__ == '__main__':
         model_ut.TestModel))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
         parser_ut.TestParser))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        registers_ut.TestRegisters))
 
     # join them and run
     suite = unittest.TestSuite(suiteList)
