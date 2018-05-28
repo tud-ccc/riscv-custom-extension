@@ -118,11 +118,11 @@ for opc, mdls in dfn.items():
 ${hex(opc)}: decode FUNCT3 {
 % for funct3, val in funct3_dict.items():
 % if type(val) != list:
-${hex(funct3)}: I32Op::${val.name}({${val.definition}}, uint32_t);
+${hex(funct3)}: I32Op::${val.name}({${val.definition}}, uint32_t, IntCustOp);
 % else:
 ${hex(funct3)}: decode FUNCT7 {
 % for mdl in val:
-${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}});
+${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 % endfor
 }
 % endif
