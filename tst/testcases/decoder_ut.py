@@ -102,7 +102,7 @@ class TestDecoder(unittest.TestCase):
 0x2: decode FUNCT3 {
 0x0: I32Op::itype({{
     test;
-}}, uint32_t);
+}}, uint32_t, IntCustOp);
 }
 '''
         self.assertEqual(decoder.decoder, expect)
@@ -123,7 +123,7 @@ class TestDecoder(unittest.TestCase):
 0x0: decode FUNCT7 {
 0x0: R32Op::rtype({{
     test;
-}});
+}}, IntCustOp);
 }
 }
 '''
@@ -151,27 +151,27 @@ class TestDecoder(unittest.TestCase):
 0x2: decode FUNCT3 {
 0x0: I32Op::itype0({{
     test;
-}}, uint32_t);
+}}, uint32_t, IntCustOp);
 0x1: I32Op::itype1({{
     test;
-}}, uint32_t);
+}}, uint32_t, IntCustOp);
 0x2: decode FUNCT7 {
 0x0: R32Op::rtype2({{
     test;
-}});
+}}, IntCustOp);
 0x1: R32Op::rtype3({{
     test;
-}});
+}}, IntCustOp);
 }
 }
 0x16: decode FUNCT3 {
 0x0: decode FUNCT7 {
 0x0: R32Op::rtype4({{
     test;
-}});
+}}, IntCustOp);
 0x1: R32Op::rtype5({{
     test;
-}});
+}}, IntCustOp);
 }
 }
 '''
