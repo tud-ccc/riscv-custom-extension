@@ -54,6 +54,7 @@ class Model:
         tu = index.parse(impl, ['-x', 'c++', '-c', '-std=c++11'])
 
         # information to retrieve form model
+        self._cycles = 0            # cycle count for the instruction
         self._dfn = ''              # definition
         self._form = ''             # format
         self._funct3 = 0xff         # funct3 bit field
@@ -122,6 +123,10 @@ class Model:
             if node.spelling == 'funct7':
                 logger.debug('Model funct7:')
                 self._funct7 = self.extract_value(node)
+            # cycle count
+            if node.spelling == 'cycles':
+                logger.debug('Model cycles:')
+                self._cycles = self.extract_value(node)
 
         if node.kind == clang.cindex.CursorKind.PARM_DECL:
             # process all parameter declarations
@@ -198,6 +203,10 @@ class Model:
         # funct7 --> 7 bits
         if self._form == 'R' and self._funct7 > 0x7f:
             raise ValueError(self._funct7, 'Invalid funct7.')
+
+        # check, if cycles where added
+        if self._cycles == 0:
+            raise ValueError(self._cycles, 'Missing cycle information.')
 
         # does the definition starts and end with a bracket
         if not self._dfn.startswith('{'):

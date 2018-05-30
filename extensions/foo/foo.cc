@@ -26,6 +26,7 @@
 
 #include <cstdint>
 
+uint8_t cycles = 1;
 uint8_t opc    = 0x02;  // opc, 5 bits
 uint8_t funct3 = 0x01;  // funct3, 3 bits
 
