@@ -1,3 +1,4 @@
 # ignore all compiled python files
 *.pyc
+build/
 tst/files
