@@ -34,7 +34,7 @@ from mako.template import Template
 logger = logging.getLogger(__name__)
 
 
-class Decoder:
+class Gem5:
     '''
     This class builds the code snippets, that are later integrated in the gem5
     decoder. It builds a custom decoder depending on the previously parsed
@@ -78,13 +78,17 @@ class Decoder:
         else:
             logger.info('Nothing to do')
 
-    def extend_decoder(self):
+    def extend_gem5(self):
         '''
         Calls the functions to generate a custom decoder and
         patch the necessary files in gem5.
         '''
+
+        # first: decoder related stuff
         self.gen_decoder()
-        self.patch_gem5()
+        self.patch_decoder()
+        # second: create timings for functional units
+        self.create_FU_timings()
 
     def gen_decoder(self):
         # iterate of all custom extensions and generate a custom decoder
@@ -133,7 +137,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
         self._decoder = dec_templ.render(models=self._models)
         logger.debug('custom decoder: \n' + self._decoder)
 
-    def patch_gem5(self):
+    def patch_decoder(self):
         # patch the gem5 isa decoder
         # for now: always choose rv32.isa
         logger.info("Patch the gem5 isa file " + self._isa_decoder)
@@ -156,6 +160,15 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
         with open(self._isa_decoder, 'w') as fh:
             content = ''.join(content)
             fh.write(content)
+
+    def create_FU_timings(self):
+        '''
+        Retrieve the cycle count information from the models.
+        Together with the mask and match value, create a timing for
+        every custom instruction.
+        '''
+
+        pass
 
     @property
     def decoder(self):

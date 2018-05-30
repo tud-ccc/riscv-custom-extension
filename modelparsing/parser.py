@@ -32,8 +32,8 @@ import os
 from stat import *
 
 from compiler import Compiler
-from decoder import Decoder
 from extensions import Extensions
+from gem5 import Gem5
 from model import Model
 from registers import Registers
 
@@ -49,7 +49,7 @@ class Parser:
     def __init__(self, args):
         self._args = args
         self._compiler = Compiler(None, None, self._args)
-        self._decoder = Decoder([], None)
+        self._gem5 = Gem5([], None)
         self._exts = None
         self._models = []
 
@@ -60,7 +60,7 @@ class Parser:
 
         logger.info('Remove custom instructions from GNU binutils files')
         self._compiler.restore()
-        self._decoder.restore()
+        self._gem5.restore()
 
     def parse_models(self):
         '''
@@ -81,7 +81,7 @@ class Parser:
 
         self._exts = Extensions(self._models)
         self._compiler = Compiler(self._exts, self._regs, self._args)
-        self._decoder = Decoder(self._models, self._regs)
+        self._gem5 = Gem5(self._models, self._regs)
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
@@ -117,9 +117,9 @@ class Parser:
 
     def extend_gem5(self):
         '''
-        Extend the gem5 decoder.
+        Extend the gem5 simulator.
         '''
-        self._decoder.extend_decoder()
+        self._gem5.extend_gem5()
 
     @property
     def args(self):
@@ -131,7 +131,7 @@ class Parser:
 
     @property
     def decoder(self):
-        return self._decoder
+        return self._gem5
 
     @property
     def extensions(self):
