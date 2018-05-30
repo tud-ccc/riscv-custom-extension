@@ -75,3 +75,8 @@ class CCModel:
                 self.op2 = 'imm'
         else:
             self.op2 = ''
+
+        if 'nocycles' not in faults:
+            self.cycles = 1
+        else:
+            self.cycles = 0

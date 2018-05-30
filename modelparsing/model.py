@@ -219,6 +219,10 @@ class Model:
         logger.info('Model meets requirements')
 
     @property
+    def cycles(self):
+        return self._cycles
+
+    @property
     def definition(self):
         return self._dfn
 

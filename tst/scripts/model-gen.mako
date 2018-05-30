@@ -29,6 +29,9 @@
 %>\
 #include <cstdint>
 
+% if model.cycles:
+uint8_t cycles = ${model.cycles}; // cycle count
+% endif
 % if model.ftype == 'R':
 uint8_t opc    = ${model.opc};  // opc, 5 bits
 uint8_t funct3 = ${model.funct3};  // funct3, 3 bits
