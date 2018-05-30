@@ -52,6 +52,12 @@ class Gem5:
                 '../../../src/arch/riscv/isa/decoder/rv32.isa'))
         assert os.path.exists(self._isa_decoder)
 
+        self._buildpath = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                '../build'))
+        assert os.path.exists(self._buildpath)
+
     def restore(self):
         '''
         Remove the custom extensions from the isa decoder.
@@ -168,6 +174,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
         every custom instruction.
         '''
 
+        logger.info("Create custom timing file for Minor CPU.")
         timing_templ = Template(r"""<%
 %>\
 # === AUTO GENERATED FILE ===
@@ -201,15 +208,15 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 # Authors: Robert Scheffel
 
 from m5.objects import *
-
 % for model in models:
+
+
 class MinorFUTiming${model.name.title()}(MinorFUTiming):
     description = 'Custom${model.name.title()}'
     srcRegsRelativeLats = [2]
     extraCommitLat = ${model.cycles - 1}
-
-
 % endfor
+
 
 custom_timings = [
 % for model in models:
@@ -218,9 +225,12 @@ custom_timings = [
 ]
 """)
 
-        self._FUtimings = timing_templ.render(models=self._models)
+        _FUtimings = timing_templ.render(models=self._models)
 
-        print(self._FUtimings)
+        timingfile = os.path.join(self._buildpath, 'minor_custom_timings.py')
+
+        with open(timingfile, 'w') as fh:
+            fh.write(_FUtimings)
 
     @property
     def decoder(self):
