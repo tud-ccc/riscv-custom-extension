@@ -227,7 +227,11 @@ custom_timings = [
 
         _FUtimings = timing_templ.render(models=self._models)
 
-        timingfile = os.path.join(self._buildpath, 'minor_custom_timings.py')
+        pythonbuildpath = os.path.join(self._buildpath, 'python')
+        if not os.path.exists(pythonbuildpath):
+            os.makedirs(pythonbuildpath)
+
+        timingfile = os.path.join(pythonbuildpath, 'minor_custom_timings.py')
 
         with open(timingfile, 'w') as fh:
             fh.write(_FUtimings)
