@@ -96,6 +96,7 @@ class Gem5:
         self.create_FU_timings()
 
     def gen_decoder(self):
+        assert os.path.exists(self._buildpath)
         # iterate of all custom extensions and generate a custom decoder
         # first sort models:
         # opcode > funct3 (> funct7)
@@ -141,6 +142,15 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 
         self._decoder = dec_templ.render(models=self._models)
         logger.debug('custom decoder: \n' + self._decoder)
+
+        isabuildpath = os.path.join(self._buildpath, 'isa')
+        if not os.path.exists(isabuildpath):
+            os.makedirs(isabuildpath)
+
+        isafile = os.path.join(isabuildpath, 'custom.isa')
+
+        with open(isafile, 'w') as fh:
+            fh.write(self._decoder)
 
     def patch_decoder(self):
         # patch the gem5 isa decoder
