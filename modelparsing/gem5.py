@@ -106,6 +106,7 @@ class Gem5:
 
         # first: decoder related stuff
         self.gen_decoder()
+        self.gen_cxx_files()
         self.patch_decoder()
         # second: create timings for functional units
         self.create_FU_timings()
@@ -162,6 +163,8 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
         self._decoder = dec_templ.render(models=self._models)
         logger.debug('custom decoder: \n' + self._decoder)
 
+    def gen_cxx_files(self):
+        # now generate the cxx files using the isa parser
         isabuildpath = os.path.join(self._buildpath, 'isa')
         if not os.path.exists(isabuildpath):
             os.makedirs(isabuildpath)

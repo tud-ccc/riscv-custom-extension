@@ -29,7 +29,7 @@
 # Authors: Robert Scheffel
 
 from testcases import compiler_ut
-from testcases import decoder_ut
+from testcases import gem5_ut
 from testcases import extensions_ut
 from testcases import instruction_ut
 from testcases import model_ut
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
         compiler_ut.TestCompiler))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        decoder_ut.TestDecoder))
+        gem5_ut.TestGem5))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
         extensions_ut.TestExtensions))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
