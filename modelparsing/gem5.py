@@ -28,6 +28,7 @@
 
 import logging
 import os
+import sys
 
 from mako.template import Template
 
@@ -46,16 +47,30 @@ class Gem5:
         self._regs = regs
         self._decoder = ''
 
-        self._isa_decoder = os.path.abspath(
+        self._gem5_path = os.path.abspath(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                '../../../src/arch/riscv/isa/decoder/rv32.isa'))
+                '../../..'))
+        self._gem5_arch_path = os.path.abspath(
+            os.path.join(
+                self._gem5_path,
+                'src/arch'))
+        self._isa_decoder = os.path.abspath(
+            os.path.join(
+                self._gem5_arch_path,
+                'riscv/isa/decoder/rv32.isa'))
         assert os.path.exists(self._isa_decoder)
 
         self._buildpath = os.path.abspath(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 '../build'))
+
+        self._isamain = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                '../isa/main.isa'))
+        assert os.path.exists(self._isamain)
 
     def restore(self):
         '''
@@ -97,6 +112,7 @@ class Gem5:
 
     def gen_decoder(self):
         assert os.path.exists(self._buildpath)
+        assert os.path.exists(self._gem5_arch_path)
         # iterate of all custom extensions and generate a custom decoder
         # first sort models:
         # opcode > funct3 (> funct7)
@@ -104,6 +120,73 @@ class Gem5:
 
         # sort models
         self._models.sort(key=lambda x: (x.opc, x.funct3, x.funct7))
+
+        dec_templ = Template(r"""<%
+dfn = {}
+for model in models:
+    if model.opc in dfn:
+        dfn[model.opc].append(model)
+    else:
+        dfn[model.opc] = [model]
+for opc, mdls in dfn.items():
+    funct3 = {}
+    for mdl in mdls:
+        if mdl.form == 'I':
+            funct3[mdl.funct3] = mdl
+        else:
+            if mdl.funct3 in funct3:
+                funct3[mdl.funct3].append(mdl)
+            else:
+                funct3[mdl.funct3] = [mdl]
+    dfn[opc] = funct3
+%>\
+decode OPCODE default Unknown::unknown() {
+% for opc,funct3_dict in dfn.items():
+${hex(opc)}: decode FUNCT3 {
+% for funct3, val in funct3_dict.items():
+% if type(val) != list:
+${hex(funct3)}: I32Op::${val.name}({${val.definition}}, uint32_t, IntCustOp);
+% else:
+${hex(funct3)}: decode FUNCT7 {
+% for mdl in val:
+${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
+% endfor
+}
+% endif
+% endfor
+}
+% endfor
+}
+""")
+
+        self._decoder = dec_templ.render(models=self._models)
+        logger.debug('custom decoder: \n' + self._decoder)
+
+        isabuildpath = os.path.join(self._buildpath, 'isa')
+        if not os.path.exists(isabuildpath):
+            os.makedirs(isabuildpath)
+
+        isafile = os.path.join(isabuildpath, 'custom.isa')
+
+        with open(isafile, 'w') as fh:
+            fh.write(self._decoder)
+
+        # create a builddir
+        gen_build_dir = os.path.join(self._buildpath, 'generated')
+        if not os.path.exists(gen_build_dir):
+            os.makedirs(gen_build_dir)
+
+        # add some paths to call the gem5 isa parser
+        sys.path[0:0] = [self._gem5_arch_path]
+        sys.path[0:0] = [os.path.join(self._gem5_path, 'src/python')]
+        import isa_parser
+
+        logger.info('Let gem5 isa_parser generate decoder files')
+        parser = isa_parser.ISAParser(gen_build_dir)
+        parser.parse_isa_desc(self._isamain)
+
+    def patch_decoder(self):
+        # patch the gem5 isa decoder
 
         dec_templ = Template(r"""<%
 dfn = {}
@@ -140,20 +223,8 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 }
 % endfor""")
 
-        self._decoder = dec_templ.render(models=self._models)
-        logger.debug('custom decoder: \n' + self._decoder)
+        decoder_patch = dec_templ.render(models=self._models)
 
-        isabuildpath = os.path.join(self._buildpath, 'isa')
-        if not os.path.exists(isabuildpath):
-            os.makedirs(isabuildpath)
-
-        isafile = os.path.join(isabuildpath, 'custom.isa')
-
-        with open(isafile, 'w') as fh:
-            fh.write(self._decoder)
-
-    def patch_decoder(self):
-        # patch the gem5 isa decoder
         # for now: always choose rv32.isa
         logger.info("Patch the gem5 isa file " + self._isa_decoder)
         with open(self._isa_decoder, 'r') as fh:
@@ -169,7 +240,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
                 fh.write(data)
 
         line = len(content) - 2
-        content.insert(line, self._decoder)
+        content.insert(line, decoder_patch)
 
         # write back modified content
         with open(self._isa_decoder, 'w') as fh:

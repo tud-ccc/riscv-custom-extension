@@ -1,4 +1,6 @@
 # ignore all compiled python files
 *.pyc
-build/
+parser.out
+parsetab.py
+build
 tst/files
