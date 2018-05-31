@@ -97,6 +97,12 @@ def main():
                         default=os.path.join(
                             os.path.expanduser("~"),
                             'projects/riscv-gnu-toolchain'))
+    parser.add_argument('--tc-only',
+                        action='store_true',
+                        help='If set, only the toolchain is extended.')
+    parser.add_argument('--gem5-only',
+                        action='store_true',
+                        help='If set, only gem5 is extended')
     parser.add_argument('-v',
                         '--verbose',
                         default=0,
@@ -125,10 +131,13 @@ def main():
             os.makedirs(buildpath)
 
         modelparser.parse_models()
-        # extend compiler with models
-        modelparser.extend_compiler()
-        # extend gem5
-        modelparser.extend_gem5()
+
+        if not args.gem5_only:
+            # extend compiler with models
+            modelparser.extend_compiler()
+        if not args.tc_only:
+            # extend gem5
+            modelparser.extend_gem5()
 
     # modelparser.remove_models()
 
