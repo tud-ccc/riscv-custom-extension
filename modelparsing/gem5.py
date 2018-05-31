@@ -56,7 +56,6 @@ class Gem5:
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 '../build'))
-        assert os.path.exists(self._buildpath)
 
     def restore(self):
         '''
@@ -174,6 +173,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
         every custom instruction.
         '''
 
+        assert os.path.exists(self._buildpath)
         logger.info("Create custom timing file for Minor CPU.")
         timing_templ = Template(r"""<%
 %>\

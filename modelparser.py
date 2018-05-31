@@ -32,6 +32,7 @@ import argparse
 import logging
 import logging.handlers
 import os
+import shutil
 from modelparsing.parser import Parser
 
 # get root logger
@@ -108,9 +109,21 @@ def main():
     logger.info('Start parsing models')
     modelparser = Parser(args)
 
+    buildpath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), 'build')
+
     if args.restore:
+        if os.path.exists(buildpath):
+            try:
+                logger.info('Remove build directory')
+                shutil.rmtree(buildpath)
+            except OSError as e:
+                logger.error("Error: %s - %s" % (e.filename, e.strerror))
         modelparser.restore()
     else:
+        if not os.path.exists(buildpath):
+            os.makedirs(buildpath)
+
         modelparser.parse_models()
         # extend compiler with models
         modelparser.extend_compiler()
