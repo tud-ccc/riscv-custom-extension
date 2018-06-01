@@ -84,7 +84,7 @@ def main():
                         type=str,
                         default=os.path.join(
                             os.path.dirname(__file__),
-                            'extensions'),
+                            '../extensions'),
                         help='Path to model definition. ' +
                         'Can be a folder or a single file.')
     parser.add_argument('-r',

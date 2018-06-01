@@ -50,7 +50,7 @@ class Extensions:
 
         # riscv-opcodes path
         self._rv_opc = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '../riscv-opcodes')
+            os.path.realpath(__file__)), '../../riscv-opcodes')
 
         self._opc_templ = os.path.join(os.path.dirname(
             os.path.realpath(__file__)), 'opcodes-custom.mako')

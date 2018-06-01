@@ -41,7 +41,7 @@ def GenFile(filename):
 for t in BUILD_TARGETS:
     path_dirs = t.split('/')
 
-    if 'RISCV' in path_dirs and os.path.exists('./build/generated'):
+    if 'RISCV' in path_dirs:
         gen_files = []
 
         main.Append(CPPPATH=[Dir('./build/generated'), Dir('../RISCV/')])
