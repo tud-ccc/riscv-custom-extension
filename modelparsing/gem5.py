@@ -55,6 +55,8 @@ class Gem5:
             os.path.join(
                 self._gem5_path,
                 'src/arch'))
+        self._gem5_ply_path = os.path.join(
+            self._gem5_path, 'ext/ply')
         self._isa_decoder = os.path.abspath(
             os.path.join(
                 self._gem5_arch_path,
@@ -181,6 +183,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 
         # add some paths to call the gem5 isa parser
         sys.path[0:0] = [self._gem5_arch_path]
+        sys.path[0:0] = [self._gem5_ply_path]
         sys.path[0:0] = [os.path.join(self._gem5_path, 'src/python')]
         import isa_parser
 
