@@ -72,7 +72,28 @@ class ModelParser():
 
     def __init__(self):
         config = ConfigParser.ConfigParser()
-        config.read('../config.ini')
+        conffile = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), '../config.ini')
+        config.read(conffile)
+
+        self.modelpath = os.path.expanduser(config.get("DEFAULT", "MODELPATH"))
+        self.tcpath = os.path.expanduser(config.get("DEFAULT", "TOOLCHAIN"))
+
+        assert(self.modelpath)
+        assert(self.tcpath)
+
+    def parse(self):
+        modelparser = Parser(self.tcpath, self.modelpath)
+
+        buildpath = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), '../build')
+
+        if not os.path.exists(buildpath):
+            os.makedirs(buildpath)
+
+        modelparser.parse_models()
+        modelparser.extend_compiler()
+        modelparser.extend_gem5()
 
 
 def main():

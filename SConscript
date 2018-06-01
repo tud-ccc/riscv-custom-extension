@@ -28,6 +28,9 @@
 #
 # Authors: Robert Scheffel
 
+import sys
+import SCons.Node.FS
+
 Import('*')
 
 
@@ -35,10 +38,20 @@ def GenFile(filename):
     gen_files.append(File('./build/generated/' + filename))
 
 
+fs = SCons.Node.FS.get_default_fs()
+root = fs.Dir('.')
+module_python_path = [root.Dir('python').srcnode().abspath]
+sys.path[0:0] = module_python_path
+
 for t in BUILD_TARGETS:
     path_dirs = t.split('/')
 
     if 'RISCV' in path_dirs:
+        import modelparser
+
+        parser = modelparser.ModelParser()
+        parser.parse()
+
         gen_files = []
 
         main.Append(CPPPATH=[Dir('./build/generated'), Dir('../RISCV/')])
