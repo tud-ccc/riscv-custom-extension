@@ -75,6 +75,14 @@ class TestGem5(unittest.TestCase):
         def definition(self):
             return self._definition
 
+    class Extensions:
+        def __init__(self, models):
+            self._models = models
+
+        @property
+        def models(self):
+            return self._models
+
     class Registers:
         def __init__(self, regmap):
             self._regmap = regmap
@@ -136,9 +144,10 @@ class TestGem5(unittest.TestCase):
     def testITypeDecoder(self):
         # test a simple decoder generation for an i type operation
         name = 'itype'
-        models = [self.Model(name, self.form, self.opc,
-                             self.funct3, self.definition)]
-        decoder = Gem5(models, self.regs)
+        exts = self.Extensions(
+            [self.Model(name, self.form, self.opc,
+                        self.funct3, self.definition)])
+        decoder = Gem5(exts, self.regs)
         decoder._buildpath = self.folderpath
         decoder.gen_decoder()
 
@@ -158,10 +167,11 @@ decode OPCODE default Unknown::unknown() {
         name = 'rtype'
         self.form = 'R'
         funct7 = 0x00
-        models = [self.Model(name, self.form, self.opc,
-                             self.funct3, self.definition, funct7)]
+        exts = self.Extensions(
+            [self.Model(name, self.form, self.opc,
+                        self.funct3, self.definition, funct7)])
 
-        decoder = Gem5(models, self.regs)
+        decoder = Gem5(exts, self.regs)
         decoder._buildpath = self.folderpath
         decoder.gen_decoder()
 
@@ -186,14 +196,15 @@ decode OPCODE default Unknown::unknown() {
         name4 = 'rtype4'
         name5 = 'rtype5'
 
-        models = [self.Model(name0, 'I', 0x02, 0x0, self.definition),
-                  self.Model(name1, 'I', 0x02, 0x1, self.definition),
-                  self.Model(name2, 'R', 0x02, 0x2, self.definition, 0x0),
-                  self.Model(name3, 'R', 0x02, 0x2, self.definition, 0x1),
-                  self.Model(name4, 'R', 0x16, 0x0, self.definition, 0x0),
-                  self.Model(name5, 'R', 0x16, 0x0, self.definition, 0x1)]
+        exts = self.Extensions(
+            [self.Model(name0, 'I', 0x02, 0x0, self.definition),
+             self.Model(name1, 'I', 0x02, 0x1, self.definition),
+             self.Model(name2, 'R', 0x02, 0x2, self.definition, 0x0),
+             self.Model(name3, 'R', 0x02, 0x2, self.definition, 0x1),
+             self.Model(name4, 'R', 0x16, 0x0, self.definition, 0x0),
+             self.Model(name5, 'R', 0x16, 0x0, self.definition, 0x1)])
 
-        decoder = Gem5(models, self.regs)
+        decoder = Gem5(exts, self.regs)
         decoder._buildpath = self.folderpath
         decoder.gen_decoder()
 

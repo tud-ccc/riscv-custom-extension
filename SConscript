@@ -28,9 +28,6 @@
 #
 # Authors: Robert Scheffel
 
-import os
-import re
-
 Import('*')
 
 

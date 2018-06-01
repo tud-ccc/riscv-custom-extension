@@ -46,12 +46,13 @@ class Parser:
     and retrieve the information necessary to extend gnu binutils and gem5.
     '''
 
-    def __init__(self, args):
-        self._args = args
-        self._compiler = Compiler(None, None, self._args)
+    def __init__(self, tcpath, modelpath):
+        self._compiler = Compiler(None, None, tcpath)
         self._gem5 = Gem5([], None)
         self._exts = None
         self._models = []
+        self._modelpath = modelpath
+        self._tcpath = tcpath
 
     def restore(self):
         '''
@@ -69,18 +70,18 @@ class Parser:
         '''
 
         logger.info('Determine if modelpath is a folder or a single file')
-        if os.path.isdir(self._args.modelpath):
+        if os.path.isdir(self._modelpath):
             # restore the toolchain to its defaults
             self.restore()
             logger.info('Traverse over directory')
-            self.treewalk(self._args.modelpath)
+            self.treewalk(self._modelpath)
         else:
             logger.info('Single file, start parsing')
-            model = Model(self._args.modelpath)
+            model = Model(self._modelpath)
             self._models.append(model)
 
         self._exts = Extensions(self._models)
-        self._compiler = Compiler(self._exts, self._regs, self._args)
+        self._compiler = Compiler(self._exts, self._regs, self._tcpath)
         self._gem5 = Gem5(self._exts, self._regs)
 
     def treewalk(self, top):

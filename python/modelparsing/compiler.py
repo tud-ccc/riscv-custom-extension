@@ -41,30 +41,27 @@ class Compiler:
     the riscv compiler
     '''
 
-    def __init__(self, exts, regs, args):
-        self._args = args
+    def __init__(self, exts, regs, tcpath):
         self._exts = exts
         self._regs = regs
 
         # header file that needs to be edited
         self.opch = os.path.abspath(
             os.path.join(
-                args.toolchain,
+                tcpath,
                 'riscv-binutils-gdb/include/opcode/riscv-opc.h'))
         # custom opc.h file
         self.opch_cust = os.path.abspath(
             os.path.join(
-                args.toolchain,
+                tcpath,
                 'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h'))
         # c source file that needs to be edited
         self.opcc = os.path.abspath(
             os.path.join(
-                args.toolchain,
+                tcpath,
                 'riscv-binutils-gdb/opcodes/riscv-opc.c'))
 
-        tcpath = self._args.toolchain
         mfile = os.path.join(tcpath, 'Makefile')
-
         assert(os.path.exists(mfile))
 
         with open(mfile, 'r') as fh:
@@ -331,10 +328,6 @@ void WRITE_CUST_REG(uint32_t reg, uint32_t val)
 
         with open(regsintr, 'w') as fh:
             fh.write(intr_file)
-
-    @property
-    def args(self):
-        return self._args
 
     @property
     def exts(self):

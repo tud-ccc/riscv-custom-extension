@@ -29,6 +29,7 @@
 # Authors: Robert Scheffel
 
 import argparse
+import ConfigParser
 import logging
 import logging.handlers
 import os
@@ -61,6 +62,17 @@ console_handler.setFormatter(logging.Formatter(
 root_logger.addHandler(console_handler)
 
 logger = logging.getLogger(__name__)
+
+
+class ModelParser():
+    '''
+    This class is used by the SConscript, to invoke the parser
+    in build time
+    '''
+
+    def __init__(self):
+        config = ConfigParser.ConfigParser()
+        config.read('../config.ini')
 
 
 def main():
@@ -113,7 +125,7 @@ def main():
     set_log_level_from_verbose(args)
 
     logger.info('Start parsing models')
-    modelparser = Parser(args)
+    modelparser = Parser(args.toolchain, args.modelpath)
 
     buildpath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), '../build')
