@@ -81,7 +81,7 @@ class Parser:
 
         self._exts = Extensions(self._models)
         self._compiler = Compiler(self._exts, self._regs, self._args)
-        self._gem5 = Gem5(self._models, self._regs)
+        self._gem5 = Gem5(self._exts, self._regs)
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))

@@ -170,7 +170,8 @@ Format not supported.
 
         # create instructions
         for i in range(0, len(self._models)):
-            inst = Instruction(self._models[i].form,
+            inst = Instruction(self._models[i].cycles,
+                               self._models[i].form,
                                masks[i],
                                matches[i],
                                self._models[i].name)

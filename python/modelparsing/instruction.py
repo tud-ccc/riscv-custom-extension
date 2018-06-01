@@ -37,7 +37,8 @@ class Instruction:
     Contains the name, the mask and the match.
     '''
 
-    def __init__(self, form, mask, match, name):
+    def __init__(self, cycles, form, mask, match, name):
+        self._cycles = cycles
         self._form = form  # format
         self._mask = mask  # the whole mask string
         self._match = match  # the whole match string
@@ -66,6 +67,10 @@ class Instruction:
             logger.warn('Instruction format unnokwn. ' +
                         'Leaving operands field empty.')
             self.operands = ''
+
+    @property
+    def cycles(self):
+        return self._cycles
 
     @property
     def form(self):

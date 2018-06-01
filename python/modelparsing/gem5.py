@@ -42,8 +42,8 @@ class Gem5:
     models.
     '''
 
-    def __init__(self, models, regs):
-        self._models = models
+    def __init__(self, exts, regs):
+        self._exts = exts
         self._regs = regs
         self._decoder = ''
 
@@ -66,7 +66,7 @@ class Gem5:
         self._buildpath = os.path.abspath(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                '../build'))
+                '../../build'))
 
         self._isamain = os.path.abspath(
             os.path.join(
@@ -122,7 +122,7 @@ class Gem5:
         logger.info('Generate custom decoder from models.')
 
         # sort models
-        self._models.sort(key=lambda x: (x.opc, x.funct3, x.funct7))
+        self._exts.models.sort(key=lambda x: (x.opc, x.funct3, x.funct7))
 
         dec_templ = Template(r"""<%
 dfn = {}
@@ -162,7 +162,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 }
 """)
 
-        self._decoder = dec_templ.render(models=self._models)
+        self._decoder = dec_templ.render(models=self._exts.models)
         logger.debug('custom decoder: \n' + self._decoder)
 
     def gen_cxx_files(self):
@@ -229,7 +229,7 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 }
 % endfor""")
 
-        decoder_patch = dec_templ.render(models=self._models)
+        decoder_patch = dec_templ.render(models=self._exts.models)
 
         # for now: always choose rv32.isa
         logger.info("Patch the gem5 isa file " + self._isa_decoder)
@@ -295,24 +295,26 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 # Authors: Robert Scheffel
 
 from m5.objects import *
-% for model in models:
+% for inst in insts:
 
 
-class MinorFUTiming${model.name.title()}(MinorFUTiming):
-    description = 'Custom${model.name.title()}'
+class MinorFUTiming${inst.name.title()}(MinorFUTiming):
+    description = 'Custom${inst.name.title()}'
+    match = ${hex(inst.matchvalue)}
+    mask = ${hex(inst.maskvalue)}
     srcRegsRelativeLats = [2]
-    extraCommitLat = ${model.cycles - 1}
+    extraCommitLat = ${inst.cycles - 1}
 % endfor
 
 
 custom_timings = [
-% for model in models:
-    MinorFUTiming${model.name.title()}(),
+% for inst in insts:
+    MinorFUTiming${inst.name.title()}(),
 % endfor
 ]
 """)
 
-        _FUtimings = timing_templ.render(models=self._models)
+        _FUtimings = timing_templ.render(insts=self._exts.instructions)
 
         pythonbuildpath = os.path.join(self._buildpath, 'python')
         if not os.path.exists(pythonbuildpath):
@@ -328,17 +330,9 @@ custom_timings = [
         return self._decoder
 
     @property
-    def models(self):
-        return self._models
-
-    @models.setter
-    def models(self, models):
-        self._models = models
+    def extensions(self):
+        return self._exts
 
     @property
     def regs(self):
         return self._regs
-
-    @regs.setter
-    def regs(self, regs):
-        self._regs = regs
