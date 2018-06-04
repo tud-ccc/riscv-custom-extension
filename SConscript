@@ -54,7 +54,9 @@ for t in BUILD_TARGETS:
 
         gen_files = []
 
-        main.Append(CPPPATH=[Dir('./build/generated'), Dir('../RISCV/')])
+        main.Append(CPPPATH=[Dir('./build/generated'),
+                             Dir('../RISCV/'),
+                             Dir('./include')])
         main.Append(CPPDEFINES=['TRACING_ON=1'])
 
         GenFile('decoder.cc')
