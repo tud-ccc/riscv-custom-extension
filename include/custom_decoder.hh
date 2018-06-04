@@ -28,8 +28,13 @@
  * Authors: Robert Scheffel
  */
 
-#ifndef __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER__
-#define __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER__
+#ifndef __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER_HH__
+#define __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER_HH__
+
+#include "types.hh"
+#include "cpu/static_inst.hh"
+
+using namespace RiscvISA;
 
 namespace RiscvCustomISA
 {
@@ -39,10 +44,10 @@ class Decoder
   public:
     Decoder() {};
     StaticInstPtr decodeInst(ExtMachInst mach_inst);
-}
+};
 
 }
 
 StaticInstPtr decodeCustomInst(ExtMachInst mach_inst);
 
-#endif // __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER__
+#endif // __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER_HH__

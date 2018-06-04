@@ -28,15 +28,17 @@
  * Authors: Robert Scheffel
  */
 
-#include "custom_decoder.hh"
+#ifndef __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_TYPES_HH__
+#define __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_TYPES_HH__
 
-#include "types.hh"
+#include "arch/generic/types.hh"
+#include "arch/riscv/types.hh"
 
-using namespace RiscvCustomISA;
-
-StaticInstPtr
-decodeCustomInst(ExtMachInst mach_inst)
+namespace RiscvCustomISA
 {
-    RiscvCustomISA::Decoder decoder;
-    return decoder.decodeInst(mach_inst);
+
+typedef RiscvISA::ExtMachInst ExtMachInst;
+
 }
+
+#endif // __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_TYPES_HH__

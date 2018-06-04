@@ -29,33 +29,75 @@
 //
 // Authors: Maxwell Walter
 //          Alec Roelke
-//          Robert Scheffel
 
 ////////////////////////////////////////////////////////////////////
 //
-// RISCV ISA description file.
-//
-////////////////////////////////////////////////////////////////////
-
-//Include the C++ include directives
-##include "includes.isa"
-
-////////////////////////////////////////////////////////////////////
-//
-// Namespace statement.  Everything below this line will be in the
-// RiscvCustomISA namespace.
+// Output include file directives.
 //
 
-namespace RiscvCustomISA;
+output header {{
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <tuple>
+#include <vector>
 
-//Include the bitfield definitions
-##include "../../../../src/arch/riscv/isa/bitfields.isa"
+#include "arch/riscv/insts/amo.hh"
+#include "arch/riscv/insts/compressed.hh"
+#include "arch/riscv/insts/mem.hh"
+#include "arch/riscv/insts/standard.hh"
+#include "arch/riscv/insts/static_inst.hh"
+#include "arch/riscv/insts/unknown.hh"
+#include "cpu/static_inst.hh"
+#include "mem/packet.hh"
+#include "mem/request.hh"
 
-//Include the operand_types and operand definitions
-##include "../../../../src/arch/riscv/isa/operands.isa"
 
-//Include the definitions for the instruction formats
-##include "../../../../src/arch/riscv/isa/formats/formats.isa"
+using namespace RiscvISA;
+}};
 
-//Include the decoder definition
-##include "../../build/isa/custom.isa"
+output decoder {{
+#include <cfenv>
+#include <cmath>
+#include <limits>
+#include <string>
+
+#include "custom_decoder.hh"
+#include "arch/riscv/faults.hh"
+#include "arch/riscv/tlb.hh"
+#include "base/cprintf.hh"
+#include "base/loader/symtab.hh"
+#include "cpu/thread_context.hh"
+#include "mem/packet.hh"
+#include "mem/request.hh"
+#include "sim/full_system.hh"
+
+using namespace RiscvISA;
+using namespace std;
+}};
+
+output exec {{
+#include <cfenv>
+#include <cmath>
+#include <string>
+#include <vector>
+
+#include "arch/generic/memhelpers.hh"
+#include "arch/riscv/faults.hh"
+#include "arch/riscv/registers.hh"
+#include "arch/riscv/utility.hh"
+#include "base/condcodes.hh"
+#include "cpu/base.hh"
+#include "cpu/exetrace.hh"
+#include "mem/packet.hh"
+#include "mem/packet_access.hh"
+#include "mem/request.hh"
+#include "sim/eventq.hh"
+#include "sim/full_system.hh"
+#include "sim/sim_events.hh"
+#include "sim/sim_exit.hh"
+#include "sim/system.hh"
+
+using namespace RiscvISA;
+using namespace std;
+}};

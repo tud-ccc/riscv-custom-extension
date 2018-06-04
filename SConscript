@@ -35,7 +35,11 @@ Import('*')
 
 
 def GenFile(filename):
-    gen_files.append(File('./build/generated/' + filename))
+    files.append(File('./build/generated/' + filename))
+
+
+def SourceFile(filename):
+    files.append(File('./src/cxx/' + filename))
 
 
 fs = SCons.Node.FS.get_default_fs()
@@ -52,7 +56,7 @@ for t in BUILD_TARGETS:
         parser = modelparser.ModelParser()
         parser.parse()
 
-        gen_files = []
+        files = []
 
         main.Append(CPPPATH=[Dir('./build/generated'),
                              Dir('../RISCV/'),
@@ -62,9 +66,9 @@ for t in BUILD_TARGETS:
         GenFile('decoder.cc')
         GenFile('inst-constrs.cc')
         GenFile('generic_cpu_exec.cc')
+        SourceFile('custom_decoder.cc')
 
-        main.Library('riscv-extensions',
-                     [main.SharedObject(f) for f in gen_files])
+        main.Library('riscv-extensions', [main.SharedObject(f) for f in files])
 
         main.Append(LIBS=['riscv-extensions'])
         main.Append(LIBPATH=[Dir('.')])
