@@ -71,7 +71,7 @@ class Gem5:
         self._isamain = os.path.abspath(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                '../../isa/main.isa'))
+                '../../src/isa/main.isa'))
         assert os.path.exists(self._isamain)
 
     def restore(self):

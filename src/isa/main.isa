@@ -38,24 +38,24 @@
 ////////////////////////////////////////////////////////////////////
 
 //Include the C++ include directives
-##include "../../../src/arch/riscv/isa/includes.isa"
+##include "../../../../src/arch/riscv/isa/includes.isa"
 
 ////////////////////////////////////////////////////////////////////
 //
 // Namespace statement.  Everything below this line will be in the
-// RiscvISAInst namespace.
+// RiscvCustomISA namespace.
 //
 
-namespace RiscvISA;
+namespace RiscvCustomISA;
 
 //Include the bitfield definitions
-##include "../../../src/arch/riscv/isa/bitfields.isa"
+##include "../../../../src/arch/riscv/isa/bitfields.isa"
 
 //Include the operand_types and operand definitions
-##include "../../../src/arch/riscv/isa/operands.isa"
+##include "../../../../src/arch/riscv/isa/operands.isa"
 
 //Include the definitions for the instruction formats
-##include "../../../src/arch/riscv/isa/formats/formats.isa"
+##include "../../../../src/arch/riscv/isa/formats/formats.isa"
 
 //Include the decoder definition
-##include "../build/isa/custom.isa"
+##include "../../build/isa/custom.isa"

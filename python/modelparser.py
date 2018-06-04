@@ -38,7 +38,7 @@ from modelparsing.parser import Parser
 
 # get root logger
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.WARN)
 
 # # always write everything to the rotating log files
 # if not os.path.exists('logs'):
@@ -56,7 +56,7 @@ root_logger.setLevel(logging.DEBUG)
 # also log to the console at a level determined by the --verbose flag
 console_handler = logging.StreamHandler()  # sys.stderr
 # set later by set_log_level_from_verbose() in interactive sessions
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.WARN)
 console_handler.setFormatter(logging.Formatter(
     '[%(levelname)s](%(name)s): %(message)s'))
 root_logger.addHandler(console_handler)
