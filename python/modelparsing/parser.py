@@ -51,6 +51,7 @@ class Parser:
         self._gem5 = Gem5([], None)
         self._exts = None
         self._models = []
+        self._regs = Registers()
         self._modelpath = modelpath
         self._tcpath = tcpath
 
@@ -105,7 +106,7 @@ class Parser:
                 # registers
                 if pathname.endswith('registers.hh'):
                     logger.info('Custom registers in file {}'.format(pathname))
-                    self._regs = Registers(pathname)
+                    self._regs.parse_file(pathname)
             else:
                 # unknown file type
                 logger.info('Unknown file type, skip')

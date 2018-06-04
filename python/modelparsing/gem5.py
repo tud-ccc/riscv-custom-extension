@@ -109,7 +109,7 @@ class Gem5:
         # first: decoder related stuff
         self.gen_decoder()
         self.gen_cxx_files()
-        self.patch_decoder()
+        # self.patch_decoder()
         # second: create timings for functional units
         self.create_FU_timings()
 
@@ -143,6 +143,7 @@ for opc, mdls in dfn.items():
                 funct3[mdl.funct3] = [mdl]
     dfn[opc] = funct3
 %>\
+% if dfn.items():
 decode OPCODE default Unknown::unknown() {
 % for opc,funct3_dict in dfn.items():
 ${hex(opc)}: decode FUNCT3 {
@@ -160,6 +161,11 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 }
 % endfor
 }
+% else:
+decode OPCODE {
+default: Unknown::unknown();
+}
+% endif
 """)
 
         self._decoder = dec_templ.render(models=self._exts.models)

@@ -37,20 +37,18 @@ class Registers:
     Defined custom registers.
     '''
 
-    def __init__(self, regfile):
+    def __init__(self):
         '''
         Init method, that takes the location of
         the register file as an argument.
         '''
-
-        logger.info("Parsing register file @ %s" % regfile)
-
-        self.parse_file(regfile)
+        self._regmap = {}
 
     def parse_file(self, file):
         '''
         Parse the file and search for all necessary information.
         '''
+        logger.info("Parsing register file @ %s" % file)
 
         with open(file, 'r') as fh:
             content = fh.readlines()

@@ -52,7 +52,6 @@ output header {{
 #include "mem/packet.hh"
 #include "mem/request.hh"
 
-
 using namespace RiscvISA;
 }};
 
