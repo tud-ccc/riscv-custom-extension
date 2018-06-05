@@ -34,10 +34,10 @@
 #include "arch/generic/types.hh"
 #include "arch/riscv/types.hh"
 
-namespace RiscvCustomISA
+namespace RiscvcustomISA
 {
 
-typedef RiscvISA::ExtMachInst ExtMachInst;
+using namespace RiscvISA;
 
 }
 

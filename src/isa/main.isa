@@ -46,7 +46,7 @@
 // RiscvCustomISA namespace.
 //
 
-namespace RiscvCustomISA;
+namespace RiscvcustomISA;
 
 //Include the bitfield definitions
 ##include "../../../../src/arch/riscv/isa/bitfields.isa"

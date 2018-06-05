@@ -51,6 +51,8 @@ for t in BUILD_TARGETS:
     path_dirs = t.split('/')
 
     if 'RISCV' in path_dirs:
+        all_isa_list.append('riscvcustom')
+
         import modelparser
 
         parser = modelparser.ModelParser()

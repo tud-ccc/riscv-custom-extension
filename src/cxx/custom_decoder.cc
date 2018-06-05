@@ -32,11 +32,11 @@
 
 #include "types.hh"
 
-using namespace RiscvCustomISA;
+using namespace RiscvcustomISA;
 
 StaticInstPtr
 decodeCustomInst(ExtMachInst mach_inst)
 {
-    RiscvCustomISA::Decoder decoder;
+    RiscvcustomISA::Decoder decoder;
     return decoder.decodeInst(mach_inst);
 }

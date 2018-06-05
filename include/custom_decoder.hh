@@ -36,7 +36,7 @@
 
 using namespace RiscvISA;
 
-namespace RiscvCustomISA
+namespace RiscvcustomISA
 {
 
 class Decoder

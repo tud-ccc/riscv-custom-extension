@@ -42,6 +42,9 @@ output header {{
 #include <tuple>
 #include <vector>
 
+#undef TheISA
+#define TheISA RiscvcustomISA
+
 #include "arch/riscv/insts/amo.hh"
 #include "arch/riscv/insts/compressed.hh"
 #include "arch/riscv/insts/mem.hh"
