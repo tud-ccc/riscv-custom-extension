@@ -68,7 +68,7 @@ for t in BUILD_TARGETS:
         GenFile('generic_cpu_exec.cc')
         SourceFile('custom_decoder.cc')
 
-        main.Library('riscv-extensions', [main.SharedObject(f) for f in files])
+        main.Library('riscv-extensions', [main.StaticObject(f) for f in files])
 
         main.Append(LIBS=['riscv-extensions'])
         main.Append(LIBPATH=[Dir('.')])
