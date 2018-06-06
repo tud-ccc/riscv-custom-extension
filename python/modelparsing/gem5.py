@@ -109,6 +109,7 @@ class Gem5:
         # first: decoder related stuff
         self.gen_decoder()
         self.gen_cxx_files()
+        self.create_regsintr()
         # self.patch_decoder()
         # second: create timings for functional units
         self.create_FU_timings()
@@ -143,6 +144,7 @@ for opc, mdls in dfn.items():
                 funct3[mdl.funct3] = [mdl]
     dfn[opc] = funct3
 %>\
+// === AUTO GENERATED FILE ===
 % if dfn.items():
 decode OPCODE default Unknown::unknown() {
 % for opc,funct3_dict in dfn.items():
@@ -272,34 +274,6 @@ ${hex(mdl.funct7)}: R32Op::${mdl.name}({${mdl.definition}}, IntCustOp);
 %>\
 # === AUTO GENERATED FILE ===
 
-# Copyright (c) 2018 TU Dresden
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met: redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer;
-# redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution;
-# neither the name of the copyright holders nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Robert Scheffel
-
 from m5.objects import *
 % for inst in insts:
 
@@ -330,6 +304,47 @@ custom_timings = [
 
         with open(timingfile, 'w') as fh:
             fh.write(_FUtimings)
+
+    def create_regsintr(self):
+        '''
+        A file is needed, that provides functions for accessing
+        custom registers within the execute function of the
+        gem5 decoded instruction.
+        '''
+
+        intr_templ = Template(r"""<%
+%>\
+// === AUTO GENERATED FILE ===
+
+#include <stdint.h>
+
+% for reg, addr in regmap.items():
+#define ${reg} ${hex(addr)}
+% endfor
+
+#define READ_CUSTOM_REG(reg) \
+({Addr EA; \
+Request::Flags memAccessFlags; \
+int32_t Mem; \
+Fault fault = NoFault; \
+EA = (reg); \
+fault = readMemAtomic(xc, traceData, EA, Mem, memAccessFlags); \
+Mem;})
+
+#define WRITE_CUST_REG(reg, val) \
+    ({uint32_t *addr = (uint32_t *)(reg); *addr = (val);})
+""")
+        intr = intr_templ.render(regmap=self._regs.regmap)
+
+        print(intr)
+
+        genpath = os.path.join(self._buildpath, 'generated')
+        if not os.path.exists(genpath):
+            os.makedirs(genpath)
+
+        intrfile = os.path.join(genpath, 'regsintr.hh')
+        with open(intrfile, 'w') as fh:
+            fh.write(intr)
 
     @property
     def decoder(self):

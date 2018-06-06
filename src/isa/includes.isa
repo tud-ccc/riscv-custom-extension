@@ -42,9 +42,6 @@ output header {{
 #include <tuple>
 #include <vector>
 
-#undef TheISA
-#define TheISA RiscvcustomISA
-
 #include "arch/riscv/insts/amo.hh"
 #include "arch/riscv/insts/compressed.hh"
 #include "arch/riscv/insts/mem.hh"
@@ -94,6 +91,7 @@ output exec {{
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
 #include "mem/request.hh"
+#include "regsintr.hh"
 #include "sim/eventq.hh"
 #include "sim/full_system.hh"
 #include "sim/sim_events.hh"

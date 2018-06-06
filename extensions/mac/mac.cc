@@ -21,6 +21,8 @@
 
 #include "mac.hh"
 
+#include "../registers.hh"
+
 uint8_t cycles = 2;     // cycle count for this instruction
 uint8_t opc    = 0x02;  // opc, 5 bits
 uint8_t funct3 = 0x00;  // funct3, 3 bits
@@ -32,6 +34,8 @@ void mac(
     uint32_t Rs2
 )
 {
-    uint32_t tmp = Rs1 * Rs2;
-    Rd = Rd + tmp;
+    uint32_t tmp = Rs1 + Rs2;
+    uint32_t a = READ_CUSTOM_REG(c0);
+    a = a + tmp;
+    Rd = a;
 }
