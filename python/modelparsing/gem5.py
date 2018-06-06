@@ -328,10 +328,11 @@ Request::Flags memAccessFlags; \
 int32_t Mem; \
 Fault fault = NoFault; \
 EA = (reg); \
-fault = readMemAtomic(xc, traceData, EA, Mem, memAccessFlags); \
+std::cout<<typeid(xc).name()<<"\n"; \
+fault = initiateMemRead(xc, traceData, EA, Mem, memAccessFlags); \
 Mem;})
 
-#define WRITE_CUST_REG(reg, val) \
+#define WRITE_CUSTOM_REG(reg, val) \
     ({uint32_t *addr = (uint32_t *)(reg); *addr = (val);})
 """)
         intr = intr_templ.render(regmap=self._regs.regmap)
