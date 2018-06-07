@@ -328,7 +328,6 @@ Request::Flags memAccessFlags; \
 int32_t Mem; \
 Fault fault = NoFault; \
 EA = (reg); \
-std::cout<<typeid(xc).name()<<"\n"; \
 fault = initiateMemRead(xc, traceData, EA, Mem, memAccessFlags); \
 Mem;})
 
