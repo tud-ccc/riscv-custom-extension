@@ -34,8 +34,9 @@ void mac(
     uint32_t Rs2
 )
 {
-    uint32_t tmp = Rs1 + Rs2;
+    uint32_t tmp = Rs1 * Rs2;
     uint32_t var = READ_CUSTOM_REG(c0);
     var = var + tmp;
+    WRITE_CUSTOM_REG(c0, var);
     Rd = var;
 }

@@ -324,23 +324,12 @@ custom_timings = [
 % endfor
 
 #define READ_CUSTOM_REG(reg) \
-({Addr EA; \
-Request::Flags flags = Request::ATOMIC_RETURN_OP; \
-int32_t mem; \
-memset(&mem, 0, sizeof(mem)); \
-uint8_t *data = (uint8_t *)&mem; \
-Fault fault = NoFault; \
-EA = (reg); \
-System *system = xc->tcBase()->getSystemPtr(); \
-RequestPtr req = new Request(EA, sizeof(int32_t), flags, Request::funcMasterId); \
-Packet pkt(req, Packet::makeReadCmd(req)); \
-pkt.dataStatic(data); \
-cout << EA << "\n"; \
-system->getPhysMem().access(&pkt); \
-mem;})
+({uint32_t val; \
+val = xc->readMiscReg(reg); \
+val;})
 
 #define WRITE_CUSTOM_REG(reg, val) \
-    ({uint32_t *addr = (uint32_t *)(reg); *addr = (val);})
+    (xc->setMiscReg(reg,val))
 """)
         intr = intr_templ.render(regmap=self._regs.regmap)
 
