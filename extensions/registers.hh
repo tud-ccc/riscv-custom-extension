@@ -34,10 +34,7 @@
 
 #include <cstdint>
 
-#define c0 0x90000000
-#define c1 0x90000004
-#define c2 0x90000008
-#define c3 0x9000000c
+#define c0 0x800
 
 uint32_t READ_CUSTOM_REG(uint32_t reg);
 void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val);

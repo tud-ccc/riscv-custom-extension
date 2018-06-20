@@ -40,37 +40,59 @@ class Model:
     C++ Reference of the custom instruction.
     '''
 
-    def __init__(self, impl):
+    def __init__(self, impl=None, read=False, write=False):
         '''
         Init method, that takes the location of
         the implementation as an argument.
         '''
 
-        logger.info("Using libclang at %s" % clang.cindex.Config.library_file)
+        if impl is None and read is True:
+            # we generate a model for read and write
+            self._cycles = 1
+            self._form = 'I'
+            self._funct3 = 0x6
+            self._funct7 = 0xff
+            self._name = 'read_custreg'
+            self._opc = 0x1e
+            # checks
+            self._check_rd = True      # check if rd is defined
+            self._check_rs1 = True     # check if rs1 is defined
+            self._check_op2 = True
+            self._rettype = 'void'
 
-        self.compile_model(impl)
+            self._dfn = '''{
+    Rd = xc->readMiscReg(imm);
+}'''
 
-        index = clang.cindex.Index.create()
-        tu = index.parse(impl, ['-x', 'c++', '-c', '-std=c++11'])
+            self.check_consistency()
 
-        # information to retrieve form model
-        self._cycles = 0            # cycle count for the instruction
-        self._dfn = ''              # definition
-        self._form = ''             # format
-        self._funct3 = 0xff         # funct3 bit field
-        self._funct7 = 0xff         # funct7 bit field
-        self._name = ''             # name
-        self._opc = 0x0             # opcode
-        # model consistency checks
-        self._check_rd = False      # check if rd is defined
-        self._check_rs1 = False     # check if rs1 is defined
-        self._check_op2 = False
-        self._rettype = ''
+        else:
+            logger.info("Using libclang at %s" %
+                        clang.cindex.Config.library_file)
 
-        logger.info("Parsing model @ %s" % impl)
+            self.compile_model(impl)
 
-        self.parse_model(tu.cursor)
-        self.check_consistency()
+            index = clang.cindex.Index.create()
+            tu = index.parse(impl, ['-x', 'c++', '-c', '-std=c++11'])
+
+            # information to retrieve form model
+            self._cycles = 1            # cycle count for the instruction
+            self._dfn = ''              # definition
+            self._form = ''             # format
+            self._funct3 = 0xff         # funct3 bit field
+            self._funct7 = 0xff         # funct7 bit field
+            self._name = ''             # name
+            self._opc = 0x0             # opcode
+            # model consistency checks
+            self._check_rd = False      # check if rd is defined
+            self._check_rs1 = False     # check if rs1 is defined
+            self._check_op2 = False
+            self._rettype = ''
+
+            logger.info("Parsing model @ %s" % impl)
+
+            self.parse_model(tu.cursor)
+            self.check_consistency()
 
     def compile_model(self, file):
         logger.info('Compile model {}'.format(file))

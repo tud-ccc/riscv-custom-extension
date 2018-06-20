@@ -54,7 +54,7 @@ class Registers:
             content = fh.readlines()
 
         regs = []
-        prog = re.compile(r"^[#]define\s([\w_-]+)\s+(0x[0-9a-fA-F]{8})$")
+        prog = re.compile(r"^[#]define\s([\w_-]+)\s+(0x8[0-9a-fA-F]{2})$")
 
         for line in content:
             match = prog.match(line)

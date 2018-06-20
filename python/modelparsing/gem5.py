@@ -145,6 +145,7 @@ for opc, mdls in dfn.items():
     dfn[opc] = funct3
 %>\
 // === AUTO GENERATED FILE ===
+
 % if dfn.items():
 decode OPCODE default Unknown::unknown() {
 % for opc,funct3_dict in dfn.items():

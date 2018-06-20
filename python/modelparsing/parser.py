@@ -81,6 +81,9 @@ class Parser:
             model = Model(self._modelpath)
             self._models.append(model)
 
+        # add model for read function
+        self._models.append(Model(read=True))
+
         self._exts = Extensions(self._models)
         self._compiler = Compiler(self._exts, self._regs, self._tcpath)
         self._gem5 = Gem5(self._exts, self._regs)
