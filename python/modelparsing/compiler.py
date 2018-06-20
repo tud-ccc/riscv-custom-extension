@@ -271,6 +271,9 @@ class Compiler:
 %>\
 // === AUTO GENERATED FILE ===
 
+#ifndef __REGSINTR_H__
+#define __REGSINTR_H__
+
 #include <stdint.h>
 
 % for reg, addr in regmap.items():
@@ -279,16 +282,30 @@ class Compiler:
 
 uint32_t READ_CUSTOM_REG(uint32_t reg)
 {
-    uint32_t *val;
-    val = (uint32_t *)reg;
-    return *val;
+    // uint32_t *val;
+    // val = (uint32_t *)reg;
+    // return *val;
+    uint32_t val;
+    __asm__ __volatile__(
+        "read_custreg %0, zero, %1"
+        : "=r" (val)
+        : "r" (reg)
+    );
+    return val;
 }
 
 void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val)
 {
-    uint32_t *addr = (uint32_t *)reg;
-    *addr = val;
+    // uint32_t *addr = (uint32_t *)reg;
+    // *addr = val;
+    __asm__ __volatile__(
+        "write_custreg zero, %1, %0"
+        :
+        : "r" (reg), "r" (val)
+    );
 }
+
+#endif // __REGSINTR_H__
 """)
 
         intr_file = regsintr_templ.render(regmap=self._regs.regmap)

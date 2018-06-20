@@ -46,23 +46,33 @@ class Model:
         the implementation as an argument.
         '''
 
-        if impl is None and read is True:
+        if impl is None:
             # we generate a model for read and write
             self._cycles = 1
-            self._form = 'I'
-            self._funct3 = 0x6
-            self._funct7 = 0xff
-            self._name = 'read_custreg'
+            self._form = 'R'
             self._opc = 0x1e
+            self._funct3 = 0x7
             # checks
             self._check_rd = True      # check if rd is defined
             self._check_rs1 = True     # check if rs1 is defined
             self._check_op2 = True
             self._rettype = 'void'
 
-            self._dfn = '''{
-    Rd = xc->readMiscReg(imm);
+            if read is True:
+                self._funct7 = 0x7e
+                self._name = 'read_custreg'
+                self._dfn = '''{
+    Rd = xc->readMiscReg(Rs2);
 }'''
+            elif write is True:
+                self._funct7 = 0x7f
+                self._name = 'write_custreg'
+                self._dfn = '''{
+    xc->setMiscReg(Rs2, Rs1);
+}'''
+            else:
+                raise ConsistencyError(
+                    'If no file is given, either write or read must be true.')
 
             self.check_consistency()
 

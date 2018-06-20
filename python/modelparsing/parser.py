@@ -83,6 +83,8 @@ class Parser:
 
         # add model for read function
         self._models.append(Model(read=True))
+        # add model for write function
+        self._models.append(Model(write=True))
 
         self._exts = Extensions(self._models)
         self._compiler = Compiler(self._exts, self._regs, self._tcpath)
