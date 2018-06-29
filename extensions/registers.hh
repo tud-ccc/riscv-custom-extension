@@ -35,6 +35,7 @@
 #include <cstdint>
 
 #define c0 0x800
+#define c1 0xcc0
 
 uint32_t READ_CUSTOM_REG(uint32_t reg);
 void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val);

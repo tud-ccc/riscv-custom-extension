@@ -54,7 +54,7 @@ class Registers:
             content = fh.readlines()
 
         regs = []
-        prog = re.compile(r"^[#]define\s([\w_-]+)\s+(0x8[0-9a-fA-F]{2})$")
+        prog = re.compile(r"^[#]define\s([\w_-]+)\s+(0x[0-9a-fA-F]{3})$")
 
         for line in content:
             match = prog.match(line)
@@ -66,6 +66,9 @@ class Registers:
 
         for match in regs:
             self._regmap[match.group(1)] = int(match.group(2), 16)
+
+        # TODO: check if defined indexes are within the right range
+        # 0x800 - 0x8ff or 0xcc0 - 0xcff
 
     @property
     def regmap(self):
