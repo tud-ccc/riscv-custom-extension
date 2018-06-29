@@ -162,11 +162,11 @@ class Compiler:
         Remove the added intrinsic library.
         '''
         logger.info('Remove intrinsic header file')
-        regsintr = os.path.join(self.stdlibs, 'regsintr.h')
-        if os.path.exists(regsintr):
+        riscvintr = os.path.join(self.stdlibs, 'riscvintr.h')
+        if os.path.exists(riscvintr):
             try:
-                logger.info('Remove {} from system'.format(regsintr))
-                os.remove(regsintr)
+                logger.info('Remove {} from system'.format(riscvintr))
+                os.remove(riscvintr)
             except OSError:
                 pass
         else:
@@ -267,12 +267,12 @@ class Compiler:
         # riscv-gnu-toolchain project, which is available via args
 
         # create a new file
-        regsintr_templ = Template(r"""<%
+        riscvintr_templ = Template(r"""<%
 %>\
 // === AUTO GENERATED FILE ===
 
-#ifndef __REGSINTR_H__
-#define __REGSINTR_H__
+#ifndef __RISCVINTR_H__
+#define __RISCVINTR_H__
 
 #include <stdint.h>
 
@@ -305,16 +305,35 @@ void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val)
     );
 }
 
-#endif // __REGSINTR_H__
+// access methods for custom instructions
+% for inst in insts:
+% if inst.form is 'R':
+% if not inst.name in ('read_custreg', 'write_custreg'):
+<% print(inst.name)%>\
+
+void ${inst.name.upper()}(uint32_t* rd, uint32_t rs1, uint32_t rs2)
+{
+    __asm__ __volatile__(
+        "${inst.name} %0, %1, %2"
+        : "=r" (*rd)
+        : "r" (rs1), "r" (rs2)
+    );
+}
+% endif
+% endif
+% endfor
+
+#endif // __RISCVINTR_H__
 """)
 
-        intr_file = regsintr_templ.render(regmap=self._regs.regmap)
+        intr_file = riscvintr_templ.render(
+            regmap=self._regs.regmap, insts=self._exts.instructions)
 
         # lets put a new file there
-        regsintr = os.path.join(self.stdlibs, 'regsintr.h')
-        logger.info("Create intrinsics file @ {}". format(regsintr))
+        riscvintr = os.path.join(self.stdlibs, 'riscvintr.h')
+        logger.info("Create intrinsics file @ {}". format(riscvintr))
 
-        with open(regsintr, 'w') as fh:
+        with open(riscvintr, 'w') as fh:
             fh.write(intr_file)
 
     @property
