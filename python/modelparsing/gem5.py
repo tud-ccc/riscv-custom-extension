@@ -329,7 +329,7 @@ val = xc->readMiscReg(reg); \
 val;})
 
 #define WRITE_CUSTOM_REG(reg, val) \
-    (xc->setMiscReg(reg,val))
+(xc->setMiscReg(reg,val))
 """)
         intr = intr_templ.render(regmap=self._regs.regmap)
 
