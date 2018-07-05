@@ -333,8 +333,6 @@ val;})
 """)
         intr = intr_templ.render(regmap=self._regs.regmap)
 
-        print(intr)
-
         genpath = os.path.join(self._buildpath, 'generated')
         if not os.path.exists(genpath):
             os.makedirs(genpath)
