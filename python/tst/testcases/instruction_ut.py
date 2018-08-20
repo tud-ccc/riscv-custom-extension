@@ -56,17 +56,22 @@ class TestInstruction(unittest.TestCase):
         # unknown
         self.formx = 'X'
         self.name2 = 'test2'
+        # cycles
+        self.cycles = 1
 
         # create Instructions
-        self.inst0 = Instruction(self.formr,
+        self.inst0 = Instruction(self.cycles,
+                                 self.formr,
                                  self.mask,
                                  self.match,
                                  self.name0)
-        self.inst1 = Instruction(self.formi,
+        self.inst1 = Instruction(self.cycles,
+                                 self.formi,
                                  self.mask,
                                  self.match,
                                  self.name1)
-        self.inst2 = Instruction(self.formx,
+        self.inst2 = Instruction(self.cycles,
+                                 self.formx,
                                  self.mask,
                                  self.match,
                                  self.name2)
@@ -77,6 +82,7 @@ class TestInstruction(unittest.TestCase):
         self.opsx = ''
 
     def testInstructionRType(self):
+        self.assertEqual(self.inst0.cycles, self.cycles)
         self.assertEqual(self.inst0.form, self.formr)
         self.assertEqual(self.inst0.mask, self.mask)
         self.assertEqual(self.inst0.maskname, self.maskname)

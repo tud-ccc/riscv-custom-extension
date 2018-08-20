@@ -50,7 +50,7 @@ class Extensions:
 
         # riscv-opcodes path
         self._rv_opc = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), '../riscv-opcodes')
+            os.path.realpath(__file__)), '../../riscv-opcodes')
 
         self._opc_templ = os.path.join(os.path.dirname(
             os.path.realpath(__file__)), 'opcodes-custom.mako')
@@ -170,7 +170,8 @@ Format not supported.
 
         # create instructions
         for i in range(0, len(self._models)):
-            inst = Instruction(self._models[i].form,
+            inst = Instruction(self._models[i].cycles,
+                               self._models[i].form,
                                masks[i],
                                matches[i],
                                self._models[i].name)

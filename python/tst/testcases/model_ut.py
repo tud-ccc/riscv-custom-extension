@@ -131,6 +131,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(model.funct7, self.ccmodel.funct7)
         self.assertEqual(model.name, self.ccmodel.name)
         self.assertEqual(model.opc, self.ccmodel.opc)
+        self.assertEqual(model.cycles, self.ccmodel.cycles)
 
     def testITypeModel(self):
         # map itype.cc
@@ -147,6 +148,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(model.funct3, self.ccmodel.funct3)
         self.assertEqual(model.name, self.ccmodel.name)
         self.assertEqual(model.opc, self.ccmodel.opc)
+        self.assertEqual(model.cycles, self.ccmodel.cycles)
 
     def testNoRdModel(self):
         # no opcode specified
@@ -242,6 +244,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(model.funct3, self.ccmodel.funct3)
         self.assertEqual(model.name, self.ccmodel.name)
         self.assertEqual(model.opc, self.ccmodel.opc)
+        self.assertEqual(model.cycles, self.ccmodel.cycles)
 
         # now a wrong model
         name = 'wrongfunct3'
@@ -271,6 +274,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(model.funct7, self.ccmodel.funct7)
         self.assertEqual(model.name, self.ccmodel.name)
         self.assertEqual(model.opc, self.ccmodel.opc)
+        self.assertEqual(model.cycles, self.ccmodel.cycles)
 
         # wrong funct7
         name = 'wrongfunct7'
@@ -329,4 +333,13 @@ class TestModel(unittest.TestCase):
         self.genModel(name, filename, faults=['nonvoid', 'return'])
 
         with self.assertRaises(ConsistencyError):
+            Model(filename)
+
+    def testNoCycleCount(self):
+        name = 'nocycles'
+        filename = self.folderpath + name + '.cc'
+
+        self.genModel(name, filename, faults=['nocycles'])
+
+        with self.assertRaises(ValueError):
             Model(filename)

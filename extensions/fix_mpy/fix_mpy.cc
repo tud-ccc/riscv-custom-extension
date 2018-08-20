@@ -28,14 +28,20 @@
  * Authors: Robert Scheffel
  */
 
-/**
- * define custom register names and its addresses
- */
+#include "fix_mpy.hh"
 
-#include <cstdint>
+#include "../registers.hh"
 
-#define c0 0x800
-#define c1 0xcc0
+uint8_t cycles = 1;     // cycle count for this instruction
+uint8_t opc    = 0x02;  // opc, 5 bits
+uint8_t funct3 = 0x02;  // funct3, 3 bits
+uint8_t funct7 = 0x00;  // funct7, 7 bits
 
-uint32_t READ_CUSTOM_REG(uint32_t reg);
-void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val);
+void fix_mpy(
+    uint32_t Rd,
+    uint32_t Rs1,
+    uint32_t Rs2
+)
+{
+    Rd =  (Rs1 * Rs2) >> 15;
+}

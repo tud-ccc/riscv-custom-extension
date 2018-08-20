@@ -29,14 +29,16 @@
 # Authors: Robert Scheffel
 
 import argparse
+import ConfigParser
 import logging
 import logging.handlers
 import os
+import shutil
 from modelparsing.parser import Parser
 
 # get root logger
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.WARN)
 
 # # always write everything to the rotating log files
 # if not os.path.exists('logs'):
@@ -54,12 +56,44 @@ root_logger.setLevel(logging.DEBUG)
 # also log to the console at a level determined by the --verbose flag
 console_handler = logging.StreamHandler()  # sys.stderr
 # set later by set_log_level_from_verbose() in interactive sessions
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.WARN)
 console_handler.setFormatter(logging.Formatter(
     '[%(levelname)s](%(name)s): %(message)s'))
 root_logger.addHandler(console_handler)
 
 logger = logging.getLogger(__name__)
+
+
+class ModelParser():
+    '''
+    This class is used by the SConscript, to invoke the parser
+    in build time
+    '''
+
+    def __init__(self):
+        config = ConfigParser.ConfigParser()
+        conffile = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), '../config.ini')
+        config.read(conffile)
+
+        self.modelpath = os.path.expanduser(config.get("DEFAULT", "MODELPATH"))
+        self.tcpath = os.path.expanduser(config.get("DEFAULT", "TOOLCHAIN"))
+
+        assert(self.modelpath)
+        assert(self.tcpath)
+
+    def parse(self):
+        modelparser = Parser(self.tcpath, self.modelpath)
+
+        buildpath = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), '../build')
+
+        if not os.path.exists(buildpath):
+            os.makedirs(buildpath)
+
+        modelparser.parse_models()
+        modelparser.extend_compiler()
+        modelparser.extend_gem5()
 
 
 def main():
@@ -83,7 +117,7 @@ def main():
                         type=str,
                         default=os.path.join(
                             os.path.dirname(__file__),
-                            'extensions'),
+                            '../extensions'),
                         help='Path to model definition. ' +
                         'Can be a folder or a single file.')
     parser.add_argument('-r',
@@ -96,6 +130,12 @@ def main():
                         default=os.path.join(
                             os.path.expanduser("~"),
                             'projects/riscv-gnu-toolchain'))
+    parser.add_argument('--tc-only',
+                        action='store_true',
+                        help='If set, only the toolchain is extended.')
+    parser.add_argument('--gem5-only',
+                        action='store_true',
+                        help='If set, only gem5 is extended')
     parser.add_argument('-v',
                         '--verbose',
                         default=0,
@@ -106,16 +146,31 @@ def main():
     set_log_level_from_verbose(args)
 
     logger.info('Start parsing models')
-    modelparser = Parser(args)
+    modelparser = Parser(args.toolchain, args.modelpath)
+
+    buildpath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), '../build')
 
     if args.restore:
+        if os.path.exists(buildpath):
+            try:
+                logger.info('Remove build directory')
+                shutil.rmtree(buildpath)
+            except OSError as e:
+                logger.error("Error: %s - %s" % (e.filename, e.strerror))
         modelparser.restore()
     else:
+        if not os.path.exists(buildpath):
+            os.makedirs(buildpath)
+
         modelparser.parse_models()
-        # extend compiler with models
-        modelparser.extend_compiler()
-        # extend gem5
-        modelparser.extend_gem5()
+
+        if not args.gem5_only:
+            # extend compiler with models
+            modelparser.extend_compiler()
+        if not args.tc_only:
+            # extend gem5
+            modelparser.extend_gem5()
 
     # modelparser.remove_models()
 

@@ -26,15 +26,18 @@
 #
 # Authors: Robert Scheffel
 
+import os
+import shutil
 import sys
 import unittest
 
 sys.path.append('..')
-from modelparsing.decoder import Decoder
+from modelparsing.gem5 import Gem5
+from tst import folderpath
 sys.path.remove('..')
 
 
-class TestDecoder(unittest.TestCase):
+class TestGem5(unittest.TestCase):
     '''
     Test that checks the decoder class output.
     '''
@@ -72,28 +75,89 @@ class TestDecoder(unittest.TestCase):
         def definition(self):
             return self._definition
 
+    class Extensions:
+        def __init__(self, models):
+            self._models = models
+
+        @property
+        def models(self):
+            return self._models
+
+    class Registers:
+        def __init__(self, regmap):
+            self._regmap = regmap
+
+        @property
+        def regmap(self):
+            return self._regmap
+
+    def __init__(self, *args, **kwargs):
+        super(TestGem5, self).__init__(*args, **kwargs)
+        # create temp folder
+        if not os.path.isdir(folderpath):
+            os.mkdir(folderpath)
+            # test specific folder in temp folder
+        test = self._testMethodName + '/'
+        self.folderpath = os.path.join(folderpath, test)
+        if not os.path.isdir(self.folderpath):
+            os.mkdir(self.folderpath)
+
+    def __del__(self):
+        if os.path.isdir(folderpath) and not os.listdir(folderpath):
+            try:
+                os.rmdir(folderpath)
+            except OSError:
+                pass
+
     def setUp(self):
         # frequently used variables
         self.form = 'I'
         self.opc = 0x02
         self.funct3 = 0x00
-        self.definition = '''{
-    test;
-}'''
+        self.definition = "{\n    test;\n}"
+
+        regmap = {'q0': 0x7000000}
+        self.regs = self.Registers(regmap)
+
+    def tearDown(self):
+        # remove generated file
+        if hasattr(self, '_outcome'):  # Python 3.4+
+            # these 2 methods have no side effects
+            result = self.defaultTestResult()
+            self._feedErrorsToResult(result, self._outcome.errors)
+        else:
+            # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
+            result = getattr(self, '_outcomeForDoCleanups',
+                             self._resultForDoCleanups)
+
+        error = ''
+        if result.errors and result.errors[-1][0] is self:
+            error = result.errors[-1][1]
+
+        failure = ''
+        if result.failures and result.failures[-1][0] is self:
+            failure = result.failures[-1][1]
+
+        if not error and not failure:
+            shutil.rmtree(self.folderpath)
 
     def testITypeDecoder(self):
         # test a simple decoder generation for an i type operation
         name = 'itype'
-        models = [self.Model(name, self.form, self.opc,
-                             self.funct3, self.definition)]
-        decoder = Decoder(models)
+        exts = self.Extensions(
+            [self.Model(name, self.form, self.opc,
+                        self.funct3, self.definition)])
+        decoder = Gem5(exts, self.regs)
+        decoder._buildpath = self.folderpath
         decoder.gen_decoder()
 
         expect = '''\
+decode OPCODE default Unknown::unknown() {
 0x2: decode FUNCT3 {
 0x0: I32Op::itype({{
     test;
-}}, uint32_t);
+}}, uint32_t, IntCustOp);
+}
 }
 '''
         self.assertEqual(decoder.decoder, expect)
@@ -103,18 +167,22 @@ class TestDecoder(unittest.TestCase):
         name = 'rtype'
         self.form = 'R'
         funct7 = 0x00
-        models = [self.Model(name, self.form, self.opc,
-                             self.funct3, self.definition, funct7)]
+        exts = self.Extensions(
+            [self.Model(name, self.form, self.opc,
+                        self.funct3, self.definition, funct7)])
 
-        decoder = Decoder(models)
+        decoder = Gem5(exts, self.regs)
+        decoder._buildpath = self.folderpath
         decoder.gen_decoder()
 
         expect = '''\
+decode OPCODE default Unknown::unknown() {
 0x2: decode FUNCT3 {
 0x0: decode FUNCT7 {
 0x0: R32Op::rtype({{
     test;
-}});
+}}, IntCustOp);
+}
 }
 }
 '''
@@ -128,41 +196,45 @@ class TestDecoder(unittest.TestCase):
         name4 = 'rtype4'
         name5 = 'rtype5'
 
-        models = [self.Model(name0, 'I', 0x02, 0x0, self.definition),
-                  self.Model(name1, 'I', 0x02, 0x1, self.definition),
-                  self.Model(name2, 'R', 0x02, 0x2, self.definition, 0x0),
-                  self.Model(name3, 'R', 0x02, 0x2, self.definition, 0x1),
-                  self.Model(name4, 'R', 0x16, 0x0, self.definition, 0x0),
-                  self.Model(name5, 'R', 0x16, 0x0, self.definition, 0x1)]
+        exts = self.Extensions(
+            [self.Model(name0, 'I', 0x02, 0x0, self.definition),
+             self.Model(name1, 'I', 0x02, 0x1, self.definition),
+             self.Model(name2, 'R', 0x02, 0x2, self.definition, 0x0),
+             self.Model(name3, 'R', 0x02, 0x2, self.definition, 0x1),
+             self.Model(name4, 'R', 0x16, 0x0, self.definition, 0x0),
+             self.Model(name5, 'R', 0x16, 0x0, self.definition, 0x1)])
 
-        decoder = Decoder(models)
+        decoder = Gem5(exts, self.regs)
+        decoder._buildpath = self.folderpath
         decoder.gen_decoder()
 
         expect = '''\
+decode OPCODE default Unknown::unknown() {
 0x2: decode FUNCT3 {
 0x0: I32Op::itype0({{
     test;
-}}, uint32_t);
+}}, uint32_t, IntCustOp);
 0x1: I32Op::itype1({{
     test;
-}}, uint32_t);
+}}, uint32_t, IntCustOp);
 0x2: decode FUNCT7 {
 0x0: R32Op::rtype2({{
     test;
-}});
+}}, IntCustOp);
 0x1: R32Op::rtype3({{
     test;
-}});
+}}, IntCustOp);
 }
 }
 0x16: decode FUNCT3 {
 0x0: decode FUNCT7 {
 0x0: R32Op::rtype4({{
     test;
-}});
+}}, IntCustOp);
 0x1: R32Op::rtype5({{
     test;
-}});
+}}, IntCustOp);
+}
 }
 }
 '''

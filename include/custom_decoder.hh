@@ -28,14 +28,26 @@
  * Authors: Robert Scheffel
  */
 
-/**
- * define custom register names and its addresses
- */
+#ifndef __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER_HH__
+#define __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER_HH__
 
-#include <cstdint>
+#include "types.hh"
+#include "cpu/static_inst.hh"
 
-#define c0 0x800
-#define c1 0xcc0
+using namespace RiscvISA;
 
-uint32_t READ_CUSTOM_REG(uint32_t reg);
-void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val);
+namespace RiscvcustomISA
+{
+
+class Decoder
+{
+  public:
+    Decoder() {};
+    StaticInstPtr decodeInst(ExtMachInst mach_inst);
+};
+
+}
+
+StaticInstPtr decodeCustomInst(ExtMachInst mach_inst);
+
+#endif // __EXT_RISCV_CUSTOM_EXTENSION_INCLUDE_DECODER_HH__

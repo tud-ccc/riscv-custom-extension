@@ -16,27 +16,14 @@
  * I-Type  [Register - Immediate]
  * void fname(uint Rd, uint Rs1, uint imm)
  *
+ * S-Type [Store]
+ * void fname(uint Rs1, uint Rs2, uint imm)
+ *
+ * U-Type [Upper Immediate]
+ * void fname(uint Rd, uint imm)
  *  
  */
 
-#include "mac.hh"
+#include <cstdint>
 
-#include "../registers.hh"
-
-uint8_t cycles = 2;     // cycle count for this instruction
-uint8_t opc    = 0x02;  // opc, 5 bits
-uint8_t funct3 = 0x00;  // funct3, 3 bits
-uint8_t funct7 = 0x00;  // funct7, 7 bits
-
-void mac(
-    uint32_t Rd,
-    uint32_t Rs1,
-    uint32_t Rs2
-)
-{
-    uint32_t tmp = Rs1 * Rs2;
-    uint32_t var = READ_CUSTOM_REG(c0);
-    var = var + tmp;
-    WRITE_CUSTOM_REG(c0, var);
-    Rd = var;
-}
+void binom(uint32_t Rd, uint32_t Rs1, uint32_t imm);

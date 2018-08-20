@@ -41,12 +41,13 @@ class TestExtensions(unittest.TestCase):
     '''
 
     class Model:
-        def __init__(self, name, form, opc, funct3, funct7=0xff):
+        def __init__(self, name, form, opc, funct3, funct7=0xff, cycles=1):
             self._name = name
             self._form = form
             self._opc = opc
             self._funct3 = funct3
             self._funct7 = funct7
+            self._cycles = cycles
 
         @property
         def name(self):
@@ -67,6 +68,10 @@ class TestExtensions(unittest.TestCase):
         @property
         def funct7(self):
             return self._funct7
+
+        @property
+        def cycles(self):
+            return self._cycles
 
     def setUp(self):
         self.form = 'I'

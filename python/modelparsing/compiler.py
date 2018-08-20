@@ -28,6 +28,9 @@
 
 import logging
 import os
+import re
+
+from mako.template import Template
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +41,54 @@ class Compiler:
     the riscv compiler
     '''
 
-    def __init__(self, exts, args):
+    def __init__(self, exts, regs, tcpath):
         self._exts = exts
+        self._regs = regs
 
         # header file that needs to be edited
         self.opch = os.path.abspath(
             os.path.join(
-                args.toolchain,
+                tcpath,
                 'riscv-binutils-gdb/include/opcode/riscv-opc.h'))
         # custom opc.h file
         self.opch_cust = os.path.abspath(
             os.path.join(
-                args.toolchain,
+                tcpath,
                 'riscv-binutils-gdb/include/opcode/riscv-custom-opc.h'))
         # c source file that needs to be edited
         self.opcc = os.path.abspath(
             os.path.join(
-                args.toolchain,
+                tcpath,
                 'riscv-binutils-gdb/opcodes/riscv-opc.c'))
+
+        mfile = os.path.join(tcpath, 'Makefile')
+        assert(os.path.exists(mfile))
+
+        with open(mfile, 'r') as fh:
+            content = fh.readlines()
+
+        prog = re.compile(r"^INSTALL_DIR\s:=\s([\w\W]+/)([\w_-]+)")
+
+        # find the install path of the toolchain
+        # only works if toolchain was built with this project
+        # and the toolchain to be altered is the last one,
+        # that was configured
+        for line in content:
+            match = prog.match(line)
+            if match:
+                break
+        instpath = os.path.join(match.group(1), match.group(2))
+        assert(os.path.exists(instpath))
+
+        self.stdlibs = os.path.join(*[instpath,
+                                      'lib/gcc/',
+                                      'riscv32-unknown-elf',
+                                      '7.2.0/include'])
 
         assert os.path.exists(self.opch)
         assert os.path.exists(os.path.dirname(self.opch_cust))
         assert os.path.exists(self.opcc)
+        assert(os.path.exists(self.stdlibs))
 
     def restore(self):
         '''
@@ -68,6 +97,7 @@ class Compiler:
 
         self.restore_header()
         self.restore_source()
+        self.remove_stdlib()
 
     def restore_header(self):
         '''
@@ -127,22 +157,31 @@ class Compiler:
         else:
             logger.info('Nothing to do')
 
+    def remove_stdlib(self):
+        '''
+        Remove the added intrinsic library.
+        '''
+        logger.info('Remove intrinsic header file')
+        riscvintr = os.path.join(self.stdlibs, 'riscvintr.h')
+        if os.path.exists(riscvintr):
+            try:
+                logger.info('Remove {} from system'.format(riscvintr))
+                os.remove(riscvintr)
+            except OSError:
+                pass
+        else:
+            logger.info('Nothing to do')
+
     def extend_compiler(self):
         '''
         Calls functions to extend necessary header and c files.
-        After that, the toolchain will be rebuild.
-        Then the compiler should know the custom instructions.
+        Also creates intrinsics for access to custom registers.
         '''
 
-        # in the meantime instructions may been deletet from the list
-        # insts = extend_header(insts)
+        logger.info('Extending the toolchain')
         self.extend_header()
-
-        # return value should be the same as the function parameter because in
-        # extend_headers all previously included instructions should have been
-        # removed.
-        # insts = extend_source(insts)
         self.extend_source()
+        self.extend_stdlibs()
 
     def extend_header(self):
         '''
@@ -222,6 +261,81 @@ class Compiler:
             content = ''.join(content)
             fh.write(content)
 
+    def extend_stdlibs(self):
+        # first: we need to find the location of the installed toolchain
+        # this is simply done by parsing the makefile in the
+        # riscv-gnu-toolchain project, which is available via args
+
+        # create a new file
+        riscvintr_templ = Template(r"""<%
+%>\
+// === AUTO GENERATED FILE ===
+
+#ifndef __RISCVINTR_H__
+#define __RISCVINTR_H__
+
+#include <stdint.h>
+
+% for reg, addr in regmap.items():
+#define ${reg} ${hex(addr)}
+% endfor
+
+uint32_t READ_CUSTOM_REG(uint32_t reg)
+{
+    // uint32_t *val;
+    // val = (uint32_t *)reg;
+    // return *val;
+    uint32_t val;
+    __asm__ __volatile__(
+        "read_custreg %0, zero, %1"
+        : "=r" (val)
+        : "r" (reg)
+    );
+    return val;
+}
+
+void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val)
+{
+    // uint32_t *addr = (uint32_t *)reg;
+    // *addr = val;
+    __asm__ __volatile__(
+        "write_custreg zero, %1, %0"
+        :
+        : "r" (reg), "r" (val)
+    );
+}
+
+// access methods for custom instructions
+% for inst in insts:
+% if inst.form is 'R':
+% if not inst.name in ('read_custreg', 'write_custreg'):
+<% print(inst.name)%>\
+
+void ${inst.name.upper()}(uint32_t* rd, uint32_t rs1, uint32_t rs2)
+{
+    __asm__ __volatile__(
+        "${inst.name} %0, %1, %2"
+        : "=r" (*rd)
+        : "r" (rs1), "r" (rs2)
+    );
+}
+% endif
+% endif
+% endfor
+
+#endif // __RISCVINTR_H__
+""")
+
+        intr_file = riscvintr_templ.render(
+            regmap=self._regs.regmap, insts=self._exts.instructions)
+
+        # lets put a new file there
+        riscvintr = os.path.join(self.stdlibs, 'riscvintr.h')
+        logger.info("Create intrinsics file @ {}". format(riscvintr))
+
+        with open(riscvintr, 'w') as fh:
+            fh.write(intr_file)
+
     @property
     def exts(self):
         return self._exts
@@ -229,3 +343,11 @@ class Compiler:
     @exts.setter
     def exts(self, exts):
         self._exts = exts
+
+    @property
+    def regs(self):
+        return self._regs
+
+    @regs.setter
+    def regs(self, regs):
+        self._regs = regs

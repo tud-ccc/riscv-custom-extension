@@ -1,3 +1,5 @@
+# -*- mode:python -*-
+
 # Copyright (c) 2018 TU Dresden
 # All rights reserved.
 #
@@ -26,39 +28,49 @@
 #
 # Authors: Robert Scheffel
 
-import logging
-import re
+import sys
+import SCons.Node.FS
 
-logger = logging.getLogger(__name__)
+Import('*')
 
 
-class Registers:
-    '''
-    Defined custom registers.
-    '''
+def GenFile(filename):
+    files.append(File('./build/generated/' + filename))
 
-    def __init__(self, regfile):
-        '''
-        Init method, that takes the location of
-        the register file as an argument.
-        '''
 
-        logger.info("Parsing register file @ %s" % regfile)
+def SourceFile(filename):
+    files.append(File('./src/cxx/' + filename))
 
-        self.parse_file(regfile)
 
-    def parse_file(self, file):
-        '''
-        Parse the file and search for all necessary information.
-        '''
+fs = SCons.Node.FS.get_default_fs()
+root = fs.Dir('.')
+module_python_path = [root.Dir('python').srcnode().abspath]
+sys.path[0:0] = module_python_path
 
-        with open(file, 'r') as fh:
-            content = fh.readlines()
+for t in BUILD_TARGETS:
+    path_dirs = t.split('/')
 
-        regs = []
-        prog = re.compile(r"^[#].*")
+    if 'RISCV' in path_dirs:
+        all_isa_list.append('riscvcustom')
 
-        for line in content:
-            match = prog.match(line)
-            if match:
-                regs.append(match)
+        import modelparser
+
+        parser = modelparser.ModelParser()
+        parser.parse()
+
+        files = []
+
+        main.Append(CPPPATH=[Dir('./build/generated'),
+                             Dir('../RISCV/'),
+                             Dir('./include')])
+        main.Append(CPPDEFINES=['TRACING_ON=1'])
+
+        GenFile('decoder.cc')
+        GenFile('inst-constrs.cc')
+        GenFile('generic_cpu_exec.cc')
+        SourceFile('custom_decoder.cc')
+
+        main.Library('riscv-extensions', [main.StaticObject(f) for f in files])
+
+        main.Append(LIBS=['riscv-extensions'])
+        main.Append(LIBPATH=[Dir('.')])

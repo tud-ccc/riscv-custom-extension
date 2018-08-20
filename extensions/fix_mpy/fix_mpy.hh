@@ -28,14 +28,30 @@
  * Authors: Robert Scheffel
  */
 
-/**
- * define custom register names and its addresses
+/*
+ * The allowed types are derived from the
+ * base instruction formats, which are descriped
+ * in 2.2 Base Instruction Formats of
+ * The RISC-V Instruction Set Manual
+ * Volume I: User-Level ISA
+ * Document Version 2.2
+ *
+ * The following function types are legit:
+ *
+ * R-Type  [Register - Register]
+ * void fname(uint Rd, uint Rs1, uint Rs2)
+ *
+ * I-Type  [Register - Immediate]
+ * void fname(uint Rd, uint Rs1, uint imm)
+ *
+ * S-Type [Store]
+ * void fname(uint Rs1, uint Rs2, uint imm)
+ *
+ * U-Type [Upper Immediate]
+ * void fname(uint Rd, uint imm)
+ *  
  */
 
 #include <cstdint>
 
-#define c0 0x800
-#define c1 0xcc0
-
-uint32_t READ_CUSTOM_REG(uint32_t reg);
-void WRITE_CUSTOM_REG(uint32_t reg, uint32_t val);
+void fix_mpy(uint32_t Rd, uint32_t Rs1, uint32_t Rs2);

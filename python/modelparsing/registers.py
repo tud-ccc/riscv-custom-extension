@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 # Copyright (c) 2018 TU Dresden
 # All rights reserved.
 #
@@ -28,32 +26,50 @@
 #
 # Authors: Robert Scheffel
 
-from testcases import compiler_ut
-from testcases import decoder_ut
-from testcases import extensions_ut
-from testcases import instruction_ut
-from testcases import model_ut
-from testcases import parser_ut
+import logging
+import re
 
-import unittest
+logger = logging.getLogger(__name__)
 
 
-if __name__ == '__main__':
-    # load test cases
-    suiteList = []
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        compiler_ut.TestCompiler))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        decoder_ut.TestDecoder))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        extensions_ut.TestExtensions))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        instruction_ut.TestInstruction))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        model_ut.TestModel))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
-        parser_ut.TestParser))
+class Registers:
+    '''
+    Defined custom registers.
+    '''
 
-    # join them and run
-    suite = unittest.TestSuite(suiteList)
-    unittest.TextTestRunner(verbosity=3).run(suite)
+    def __init__(self):
+        '''
+        Init method, that takes the location of
+        the register file as an argument.
+        '''
+        self._regmap = {}
+
+    def parse_file(self, file):
+        '''
+        Parse the file and search for all necessary information.
+        '''
+        logger.info("Parsing register file @ %s" % file)
+
+        with open(file, 'r') as fh:
+            content = fh.readlines()
+
+        regs = []
+        prog = re.compile(r"^[#]define\s([\w_-]+)\s+(0x[0-9a-fA-F]{3})$")
+
+        for line in content:
+            match = prog.match(line)
+            if match:
+                logger.debug("Defined register: {}".format(match.group()))
+                regs.append(match)
+
+        self._regmap = {}
+
+        for match in regs:
+            self._regmap[match.group(1)] = int(match.group(2), 16)
+
+        # TODO: check if defined indexes are within the right range
+        # 0x800 - 0x8ff or 0xcc0 - 0xcff
+
+    @property
+    def regmap(self):
+        return self._regmap

@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # Copyright (c) 2018 TU Dresden
 # All rights reserved.
 #
@@ -26,52 +28,35 @@
 #
 # Authors: Robert Scheffel
 
+from testcases import compiler_ut
+from testcases import gem5_ut
+from testcases import extensions_ut
+from testcases import instruction_ut
+from testcases import model_ut
+from testcases import parser_ut
+from testcases import registers_ut
 
-class CCModel:
-    '''
-    Gather all information that is used to generate a model.
-    '''
+import unittest
 
-    def __init__(self, name, ftype, inttype, opc, funct3, funct7, faults):
-        self.name = name
-        self.ftype = ftype
-        self.inttype = inttype
-        self.opc = opc
-        self.funct3 = funct3
-        self.funct7 = funct7
-        self.faults = faults
 
-        self.rd = '' if 'nord' in faults else 'Rd_uw'
-        self.op1 = '' if 'nors1' in faults else 'Rs1_uw'
+if __name__ == '__main__':
+    # load test cases
+    suiteList = []
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        compiler_ut.TestCompiler))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        gem5_ut.TestGem5))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        extensions_ut.TestExtensions))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        instruction_ut.TestInstruction))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        model_ut.TestModel))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        parser_ut.TestParser))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(
+        registers_ut.TestRegisters))
 
-        self.rettype = inttype if 'nonvoid' in faults else 'void'
-
-        if 'nodef' in faults:
-            self.dfn = ';'
-        elif 'noclose' in faults:
-            self.dfn = '{\n    // function definition\n'
-        elif 'return' in faults:
-            self.dfn = '{\n    // function definition\n' \
-                + '    return 0;\n}'
-        else:
-            self.dfn = '{\n    // function definition\n}'
-
-        # inttypes
-        if inttype == 'uint32_t':
-            opsuf = '_uw'
-        elif inttype == 'int32_t':
-            opsuf = '_sw'
-        elif inttype == 'uint64_t':
-            opsuf = '_ud'
-        elif inttype == 'int64_t':
-            opsuf = '_sd'
-        else:
-            opsuf = ''
-
-        if 'noop2' not in faults:
-            if ftype == 'R':
-                self.op2 = 'Rs2' + opsuf
-            elif ftype == 'I':
-                self.op2 = 'imm'
-        else:
-            self.op2 = ''
+    # join them and run
+    suite = unittest.TestSuite(suiteList)
+    unittest.TextTestRunner(verbosity=3).run(suite)

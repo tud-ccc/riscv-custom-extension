@@ -32,8 +32,8 @@ import os
 from stat import *
 
 from compiler import Compiler
-from decoder import Decoder
 from extensions import Extensions
+from gem5 import Gem5
 from model import Model
 from registers import Registers
 
@@ -46,12 +46,14 @@ class Parser:
     and retrieve the information necessary to extend gnu binutils and gem5.
     '''
 
-    def __init__(self, args):
-        self._args = args
-        self._models = []
+    def __init__(self, tcpath, modelpath):
+        self._compiler = Compiler(None, None, tcpath)
+        self._gem5 = Gem5([], None)
         self._exts = None
-        self._decoder = Decoder([])
-        self._compiler = None
+        self._models = []
+        self._regs = Registers()
+        self._modelpath = modelpath
+        self._tcpath = tcpath
 
     def restore(self):
         '''
@@ -59,9 +61,8 @@ class Parser:
         '''
 
         logger.info('Remove custom instructions from GNU binutils files')
-        self._compiler = Compiler(None, self._args)
         self._compiler.restore()
-        self._decoder.restore()
+        self._gem5.restore()
 
     def parse_models(self):
         '''
@@ -70,17 +71,24 @@ class Parser:
         '''
 
         logger.info('Determine if modelpath is a folder or a single file')
-        if os.path.isdir(self._args.modelpath):
+        if os.path.isdir(self._modelpath):
             # restore the toolchain to its defaults
             self.restore()
             logger.info('Traverse over directory')
-            self.treewalk(self._args.modelpath)
+            self.treewalk(self._modelpath)
         else:
             logger.info('Single file, start parsing')
-            model = Model(self._args.modelpath)
+            model = Model(self._modelpath)
             self._models.append(model)
 
+        # add model for read function
+        self._models.append(Model(read=True))
+        # add model for write function
+        self._models.append(Model(write=True))
+
         self._exts = Extensions(self._models)
+        self._compiler = Compiler(self._exts, self._regs, self._tcpath)
+        self._gem5 = Gem5(self._exts, self._regs)
 
     def treewalk(self, top):
         logger.info('Search for models in {}'.format(top))
@@ -103,7 +111,7 @@ class Parser:
                 # registers
                 if pathname.endswith('registers.hh'):
                     logger.info('Custom registers in file {}'.format(pathname))
-                    self._registers = Registers(pathname)
+                    self._regs.parse_file(pathname)
             else:
                 # unknown file type
                 logger.info('Unknown file type, skip')
@@ -112,17 +120,13 @@ class Parser:
         '''
         Extend the riscv compiler.
         '''
-
-        self._compiler = Compiler(self._exts, self._args)
         self._compiler.extend_compiler()
 
     def extend_gem5(self):
         '''
-        Extend the gem5 decoder.
+        Extend the gem5 simulator.
         '''
-        self._decoder = Decoder(self._models)
-        self._decoder.gen_decoder()
-        self._decoder.patch_gem5()
+        self._gem5.extend_gem5()
 
     @property
     def args(self):
@@ -134,7 +138,7 @@ class Parser:
 
     @property
     def decoder(self):
-        return self._decoder
+        return self._gem5
 
     @property
     def extensions(self):
@@ -143,3 +147,7 @@ class Parser:
     @property
     def models(self):
         return self._models
+
+    @property
+    def regs(self):
+        return self._regs
