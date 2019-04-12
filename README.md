@@ -3,6 +3,10 @@ RISC-V Extension Repo
 
 This repository is used to develop extensions for the RISC-V ISA.
 
+Please have a look at the [Diploma Thesis of Robert
+Sheffel](https://cfaed.tu-dresden.de/publications?pubId=2203) for more
+documentation.
+
 ## Prerequisites
 
 on Ubuntu:
